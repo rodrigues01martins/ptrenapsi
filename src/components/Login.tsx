@@ -5,7 +5,7 @@ import {
   browserSessionPersistence
 } from 'firebase/auth';
 import { auth } from '../firebase';
-import { Mail, User2, Key } from 'lucide-react';
+import { Mail, Key } from 'lucide-react';
 
 interface LoginProps {
   showToast: (message: string) => void;
@@ -38,57 +38,64 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
-        <div className="text-center mb-8">
-          <div className="bg-[#00735C]/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#00735C]">
-          <User2 size={96} className="text-[#00735C]" fill="#00735C" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800">SEDS</h1>
-          <p className="text-slate-500 text-sm mt-2">Auditoria de Despesas do Plano de Trabalho</p>
+    <div className="min-h-screen flex flex-col md:flex-row bg-white">
+
+      {/* ── Imagem à esquerda ── */}
+      <div className="hidden md:block md:w-1/2 relative">
+        <img
+          src="/jovens.png"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </div>
+
+      {/* ── Formulário à direita ── */}
+      <div className="flex-1 md:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-12">
+        <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-center">
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Mail size={12} /> E-mail Institucional
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#007770] transition-all"
+                placeholder="email registrado"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Key size={12} /> Senha
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#007770] transition-all"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full bg-[#007770] text-white font-bold py-4 rounded-2xl shadow-lg shadow-[#007770]/20 transition-all hover:bg-[#005f59] ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {loading ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Mail size={12} /> E-mail Institucional
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#00735C] transition-all"
-              placeholder="email registrado"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Key size={12} /> Senha
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#00735C] transition-all"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full bg-[#00735C] text-white font-bold py-4 rounded-2xl shadow-lg shadow-[#00735C]/20 transition-all hover:bg-[#005c4a] ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-          >
-            {loading ? 'A autenticar...' : 'Entrar no Sistema'}
-          </button>
-        </form>
-
-        <p className="text-center text-[10px] text-slate-400 mt-8 uppercase tracking-widest">
-          Acesso Restrito SEDS
-        </p>
+        {/* ── Marcas ── */}
+        <div className="w-full max-w-sm mx-auto flex items-center justify-between gap-6 pt-10">
+          <img src="/logo-seds-goias.png" alt="SEDS · Governo de Goiás" className="h-9 w-auto object-contain" />
+          <img src="/logo-aprendiz-futuro.png" alt="Aprendiz do Futuro" className="h-9 w-auto object-contain" />
+        </div>
       </div>
     </div>
   );
