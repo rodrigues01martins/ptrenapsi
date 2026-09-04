@@ -2,16 +2,14 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// SUBSTITUA pelos dados do projeto Firebase criado para este aplicativo
-// (Console Firebase > Configurações do projeto > Seus apps > SDK setup).
 const config = {
-  apiKey: 'SUBSTITUA_PELA_API_KEY',
-  authDomain: 'SUBSTITUA.firebaseapp.com',
-  projectId: 'SUBSTITUA_PROJECT_ID',
-  storageBucket: 'SUBSTITUA.firebasestorage.app',
-  messagingSenderId: 'SUBSTITUA_SENDER_ID',
-  appId: 'SUBSTITUA_APP_ID',
-  measurementId: '',
+  apiKey: 'AIzaSyAOZnxtCoDaeL8_W0z2lIRSQu4lXBPl5OE',
+  authDomain: 'ptrenapsi.firebaseapp.com',
+  projectId: 'ptrenapsi',
+  storageBucket: 'ptrenapsi.firebasestorage.app',
+  messagingSenderId: '1009359187333',
+  appId: '1:1009359187333:web:b4d1a4428e6a403bc428ec',
+  measurementId: 'G-KWV9LSEE3X',
 };
 
 const app = initializeApp(config);
