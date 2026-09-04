@@ -70,4 +70,4 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 // E-mail com acesso de administrador mesmo antes de existir um documento
 // /users/{uid} com role "admin" (bootstrap do primeiro administrador).
 // Precisa corresponder ao valor equivalente em firestore.rules.
-export const BOOTSTRAP_ADMIN_EMAIL = 'rodrigues01martins@gmail.com';
+export const BOOTSTRAP_ADMIN_EMAIL = 'juliano.mrodrigues@goias.gov.br';
