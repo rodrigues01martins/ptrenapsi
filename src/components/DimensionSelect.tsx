@@ -1,0 +1,63 @@
+import React from 'react';
+import { ArrowRight } from 'lucide-react';
+
+export type Dimension = 'financeiro' | 'metas';
+
+interface DimensionSelectProps {
+  onSelect: (dimension: Dimension) => void;
+}
+
+interface DimensionOptionProps {
+  lines: [string, string];
+  onClick: () => void;
+}
+
+const DimensionOption: React.FC<DimensionOptionProps> = ({ lines, onClick }) => (
+  <button
+    onClick={onClick}
+    className="group w-full flex items-center justify-end gap-4 py-3 text-right transition-all"
+  >
+    <span className="font-bold text-lg leading-tight text-[#007770] group-hover:text-[#005f59] group-hover:translate-x-[-4px] transition-all">
+      {lines[0]}<br />{lines[1]}
+    </span>
+    <span className="shrink-0 w-11 h-11 rounded-full border-2 border-[#007770] flex items-center justify-center text-[#007770] transition-all group-hover:bg-[#007770] group-hover:text-white group-hover:scale-110">
+      <ArrowRight size={20} />
+    </span>
+  </button>
+);
+
+export const DimensionSelect: React.FC<DimensionSelectProps> = ({ onSelect }) => {
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row bg-white">
+
+      {/* ── Imagem à esquerda ── */}
+      <div className="hidden md:block md:w-1/2 relative">
+        <img
+          src="/jovens.png"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </div>
+
+      {/* ── Seleção de dimensão à direita ── */}
+      <div className="flex-1 md:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-12">
+        <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-center divide-y divide-slate-100">
+          <DimensionOption
+            lines={['Acompanhamento', 'Financeiro']}
+            onClick={() => onSelect('financeiro')}
+          />
+          <DimensionOption
+            lines={['Monitoramento', 'e Avaliação']}
+            onClick={() => onSelect('metas')}
+          />
+        </div>
+
+        {/* ── Marcas ── */}
+        <div className="w-full max-w-sm mx-auto flex items-center justify-between gap-6 pt-10">
+          <img src="/logo-seds-goias.png" alt="SEDS · Governo de Goiás" className="h-9 w-auto object-contain" />
+          <img src="/logo-aprendiz-futuro.png" alt="Aprendiz do Futuro" className="h-9 w-auto object-contain" />
+        </div>
+      </div>
+    </div>
+  );
+};

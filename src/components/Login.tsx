@@ -5,14 +5,15 @@ import {
   browserSessionPersistence
 } from 'firebase/auth';
 import { auth } from '../firebase';
-import { Mail, Key } from 'lucide-react';
+import { Mail, Key, ArrowLeft } from 'lucide-react';
 
 interface LoginProps {
   showToast: (message: string) => void;
   onDemoMode: () => void;
+  onBack?: () => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ showToast }) => {
+export const Login: React.FC<LoginProps> = ({ showToast, onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,6 +53,14 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
       {/* ── Formulário à direita ── */}
       <div className="flex-1 md:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-12">
         <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-center">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="mb-8 flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-[#007770] transition-colors"
+            >
+              <ArrowLeft size={14} /> Voltar
+            </button>
+          )}
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">

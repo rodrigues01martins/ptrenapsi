@@ -12,16 +12,28 @@ import { BudgetItems } from './components/BudgetItems';
 import { EditModal } from './components/EditModal';
 import { Toast } from './components/Toast';
 import { Login } from './components/Login';
+import { DimensionSelect, Dimension } from './components/DimensionSelect';
+import { ComingSoon } from './components/ComingSoon';
 import { BudgetItem, LedgerEntry } from './types';
 import RelatorioFinal from './components/RelatorioFinal';
 import { UserManagement } from './components/UserManagement';
 
 type Tab = 'entry' | 'report' | 'relatorio' | 'itens' | 'gestao';
 
+function getStoredDimension(): Dimension | null {
+  try {
+    const v = sessionStorage.getItem('ptDimension');
+    return v === 'financeiro' || v === 'metas' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [dimension, setDimension] = useState<Dimension | null>(getStoredDimension);
   const [activeTab, setActiveTab] = useState<Tab>('entry');
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
@@ -101,6 +113,11 @@ export function App() {
     }, (error) => console.error("Erro Firestore:", error));
     return () => unsubscribe();
   }, [user, isDemoMode]);
+
+  const chooseDimension = (d: Dimension) => {
+    setDimension(d);
+    try { sessionStorage.setItem('ptDimension', d); } catch {}
+  };
 
   const showToast = (message: string) => {
     setToast({ message, isVisible: true });
@@ -286,9 +303,24 @@ export function App() {
       Iniciando...
     </div>
   );
-  if (!user && !isDemoMode) return (
-    <Login onDemoMode={() => setIsDemoMode(true)} showToast={showToast} />
-  );
+  if (!user && !isDemoMode) {
+    if (!dimension) {
+      return <DimensionSelect onSelect={chooseDimension} />;
+    }
+    return (
+      <Login
+        onDemoMode={() => setIsDemoMode(true)}
+        showToast={showToast}
+        onBack={() => setDimension(null)}
+      />
+    );
+  }
+
+  // A dimensão "Monitoramento e Avaliação" ainda não tem páginas próprias —
+  // ficará disponível em uma etapa posterior do projeto.
+  if (dimension === 'metas') {
+    return <ComingSoon title="Monitoramento e Avaliação" onSignOut={() => signOut(auth)} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
