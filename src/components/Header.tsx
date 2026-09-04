@@ -2,13 +2,15 @@ import React from 'react';
 
 interface HeaderProps {
   isAdmin: boolean;
+  showItensButton: boolean;
+  showExportButton: boolean;
   onNavigateItens: () => void;
   onNavigateUsuarios: () => void;
   onExportCSV: () => void;
   onSignOut: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ isAdmin, onNavigateItens, onNavigateUsuarios, onExportCSV, onSignOut }) => {
+export const Header: React.FC<HeaderProps> = ({ isAdmin, showItensButton, showExportButton, onNavigateItens, onNavigateUsuarios, onExportCSV, onSignOut }) => {
   return (
     <header className="w-full bg-white border-b border-slate-200">
       <div className="max-w-[1440px] mx-auto h-24 px-6 md:px-10 flex items-center justify-between gap-6">
@@ -21,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ isAdmin, onNavigateItens, onNavi
 
         {/* ── Menu ── */}
         <nav className="flex items-center gap-8">
-          {isAdmin && (
+          {isAdmin && showItensButton && (
             <button
               onClick={onNavigateItens}
               className="text-sm font-medium text-slate-700 hover:text-[#007770] transition-colors whitespace-nowrap"
@@ -37,12 +39,14 @@ export const Header: React.FC<HeaderProps> = ({ isAdmin, onNavigateItens, onNavi
               Usuários
             </button>
           )}
-          <button
-            onClick={onExportCSV}
-            className="text-sm font-medium text-slate-700 hover:text-[#007770] transition-colors whitespace-nowrap"
-          >
-            Exportar registros
-          </button>
+          {showExportButton && (
+            <button
+              onClick={onExportCSV}
+              className="text-sm font-medium text-slate-700 hover:text-[#007770] transition-colors whitespace-nowrap"
+            >
+              Exportar registros
+            </button>
+          )}
           <button
             onClick={onSignOut}
             className="bg-[#007770] text-white text-sm font-bold px-6 py-2.5 rounded-lg hover:bg-[#005f59] transition-colors whitespace-nowrap"
