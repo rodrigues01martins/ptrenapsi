@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+         (request.auth.token.email == "rodrigues01martins@gmail.com" &&
+          request.auth.token.email_verified == true));
+    }
+
+    // ── Usuários ─────────────────────────────────────────────
+    match /users/{userId} {
+      // Qualquer autenticado pode ler (necessário para o painel de gestão)
+      allow read: if isAuthenticated();
+      // Usuário cria o próprio documento no login OU admin cria para qualquer usuário
+      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      // Usuário atualiza o próprio doc (exceto role); admin atualiza qualquer campo
+      allow update: if isAuthenticated() && (
+        (isOwner(userId) && request.resource.data.role == resource.data.role) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ── Itens do Plano de Trabalho (orçamento) ──────────────────
+    match /budgetItems/{itemId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ── Configurações da parceria (dados fixos do relatório final) ─
+    match /settings/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ── Ledger ───────────────────────────────────────────────
+    match /ledger/{entryId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (isOwner(resource.data.authorUid) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ── Audit ────────────────────────────────────────────────
+    match /audit/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+  }
+}

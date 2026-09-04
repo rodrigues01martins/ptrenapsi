@@ -1,0 +1,194 @@
+import React, { useState } from 'react';
+import { FilePlus2, Calendar, Tag, Truck, FileText, FileUp, DollarSign, AlignLeft } from 'lucide-react';
+import { BudgetItem } from '../types';
+
+interface ExpenseFormProps {
+  budgetItems: BudgetItem[];
+  onAdd: (data: any) => void;
+  showToast: (message: string) => void;
+}
+
+export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, showToast }) => {
+  const [formData, setFormData] = useState({
+    itemCode: '',
+    supplier: '',
+    nf: '',
+    amount: '',
+    date: new Date().toISOString().split('T')[0],
+    description: '',
+    documentData: ''
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        showToast("Arquivo muito grande! Máximo 2MB.");
+        e.target.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, documentData: reader.result as string }));
+        showToast("PDF anexado!");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.itemCode || !formData.amount || !formData.date) {
+      showToast("Preencha Item, Valor e Data.");
+      return;
+    }
+    const [year, month, day] = formData.date.split('-');
+    const formattedDate = `${day}/${month}/${year}`;
+    onAdd({
+      ...formData,
+      date: formattedDate,
+      amount: parseFloat(formData.amount.replace(',', '.')),
+    });
+    setFormData({
+      itemCode: '', supplier: '', nf: '', amount: '',
+      date: new Date().toISOString().split('T')[0],
+      description: '', documentData: ''
+    });
+  };
+
+  return (
+    /* ── Sem max-w próprio: acompanha o container do App (max-w-7xl) ── */
+    <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+
+      {/* Cabeçalho */}
+      <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
+        <div className="bg-[#00735C]/10 p-2.5 rounded-xl text-[#00735C]">
+          <FilePlus2 size={42} />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">Novo Lançamento</h2>
+          <p className="text-sm text-slate-500">Insira os dados das despesas realizadas</p>
+        </div>
+      </div>
+
+      {budgetItems.length === 0 && (
+        <div className="mb-6 p-4 rounded-xl bg-[#FCD951]/20 border border-[#FCD951]/40 text-sm text-[#7a5c00]">
+          Nenhum item do Plano de Trabalho cadastrado ainda. Peça a um administrador para cadastrá-los na aba "Itens do Plano".
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* Código do Item */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
+            <Tag size={18} className="text-[#00735C]" fill="#00735C" />
+            Código do Item
+          </label>
+          <select
+            value={formData.itemCode}
+            onChange={e => setFormData(prev => ({ ...prev, itemCode: e.target.value }))}
+            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#00735C] outline-none"
+          >
+            <option value="">Selecione um item do plano...</option>
+            {budgetItems.map(item => (
+              <option key={item.id} value={item.id}>{item.id} - {item.desc}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* NF / Documento */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
+            <FileText size={18} className="text-[#00735C]" fill="#00735C" />
+            NF / Documento
+          </label>
+          <input
+            type="text" placeholder="Ex: NF 456"
+            value={formData.nf}
+            onChange={e => setFormData(prev => ({ ...prev, nf: e.target.value }))}
+            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm"
+          />
+        </div>
+
+        {/* Fornecedor */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
+            <Truck size={18} className="text-[#00735C]" fill="#00735C" />
+            Fornecedor
+          </label>
+          <input
+            type="text" placeholder="Ex: Papelaria Central"
+            value={formData.supplier}
+            onChange={e => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
+            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm"
+          />
+        </div>
+
+        {/* Valor */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
+            <DollarSign size={18} className="text-[#00735C]" fill="#00735C" />
+            Valor (R$)
+          </label>
+          <input
+            type="text" placeholder="0,00"
+            value={formData.amount}
+            onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm font-bold text-[#00735C]"
+          />
+        </div>
+
+        {/* Data */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
+            <Calendar size={18} className="text-[#00735C]" fill="#00735C" />
+            Data da Despesa
+          </label>
+          <input
+            type="date"
+            value={formData.date}
+            onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm"
+          />
+        </div>
+
+        {/* Documentação */}
+        <div className="md:col-span-2 space-y-2">
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
+            <FileUp size={18} className="text-[#00735C]" fill="#00735C" />
+            Documentação (PDF)
+          </label>
+          <input
+            type="file" accept="application/pdf"
+            onChange={handleFileChange}
+            className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#00735C]/10 file:text-[#00735C] cursor-pointer bg-slate-50 rounded-xl"
+          />
+        </div>
+
+        {/* Descrição */}
+        <div className="md:col-span-2 space-y-2">
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
+            <AlignLeft size={18} className="text-[#00735C]" fill="#00735C" />
+            <strong>Descrição</strong>
+            <span className="font-normal normal-case text-slate-400 text-xs">(Conforme especificado na Nota Fiscal/Comprovante)</span>
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            rows={2}
+            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm"
+          />
+        </div>
+
+      </div>
+
+      <button
+        type="submit"
+        className="w-full mt-8 bg-[#00735C] text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-[#005c4a] transition-all"
+      >
+        Salvar Lançamento
+      </button>
+    </form>
+  );
+};
