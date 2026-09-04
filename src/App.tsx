@@ -42,7 +42,7 @@ export function App() {
       setCanAccessReport(false);
       return;
     }
-    const bootstrapAdmin = user.email === BOOTSTRAP_ADMIN_EMAIL && user.emailVerified;
+    const bootstrapAdmin = user.email === BOOTSTRAP_ADMIN_EMAIL;
     const userDocRef = doc(db, 'users', user.uid);
     getDoc(userDocRef).then(snap => {
       const data = snap.data();
