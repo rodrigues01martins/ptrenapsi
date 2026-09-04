@@ -44,7 +44,7 @@ export const BudgetStatus: React.FC<BudgetStatusProps> = ({ entries, budgetItems
               const percentReal = item.value > 0 ? (totalGasto / item.value) * 100 : 0;
               const percentBar = Math.min(percentReal, 100);
               const isCritical = item.value > 0 && (saldo <= 0 || (saldo / item.value) <= 0.1);
-              const progressColor = percentReal > 100 ? 'bg-red-500' : isCritical ? 'bg-[#FCD951]' : 'bg-[#00735C]';
+              const progressColor = percentReal > 100 ? 'bg-red-500' : isCritical ? 'bg-[#FCD951]' : 'bg-[#007770]';
 
               return (
                 <tr key={item.id} className={cn("transition", isCritical ? "bg-[#FCD951]/10 hover:bg-[#FCD951]/15" : "hover:bg-slate-50")}>
@@ -60,7 +60,7 @@ export const BudgetStatus: React.FC<BudgetStatusProps> = ({ entries, budgetItems
                     <div className="text-[10px] text-slate-400 font-bold uppercase truncate max-w-[280px]">{item.desc}</div>
                   </td>
                   <td className="p-4 text-right text-slate-500 font-medium">{fmt.format(item.value)}</td>
-                  <td className="p-4 text-right font-bold text-[#00735C]">{fmt.format(totalGasto)}</td>
+                  <td className="p-4 text-right font-bold text-[#007770]">{fmt.format(totalGasto)}</td>
                   <td className={cn("p-4 text-right font-bold", saldo < 0 ? "text-red-600 bg-red-50" : isCritical ? "text-[#7a5c00]" : "text-emerald-600")}>
                     {fmt.format(saldo)}
                   </td>

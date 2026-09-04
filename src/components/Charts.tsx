@@ -34,7 +34,7 @@ export const Charts: React.FC<ChartsProps> = ({ categoryData, groupData, stageDa
     plugins: {
       legend: { position: 'top' as const, labels: { font: { weight: 'bold' as any } } },
       tooltip: {
-        backgroundColor: '#00735C',
+        backgroundColor: '#007770',
         callbacks: {
           label: (context: any) => `${context.dataset.label}: ${fmt.format(context.raw)}`
         }
@@ -59,19 +59,19 @@ export const Charts: React.FC<ChartsProps> = ({ categoryData, groupData, stageDa
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <h3 className="text-lg font-bold text-slate-900 mb-6">Execução por Categoria</h3>
         <div className="h-64">
-          <Bar options={options} data={createData(categoryData.labels, categoryData.previsto, categoryData.executado, ['#e2e8f0', '#00735C'])} />
+          <Bar options={options} data={createData(categoryData.labels, categoryData.previsto, categoryData.executado, ['#e2e8f0', '#007770'])} />
         </div>
       </div>
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <h3 className="text-lg font-bold text-slate-900 mb-6">Execução por Grupo de Despesa</h3>
         <div className="h-64">
-          <Bar options={options} data={createData(groupData.labels, groupData.previsto, groupData.executado, ['#fde68a', '#00735C'])} />
+          <Bar options={options} data={createData(groupData.labels, groupData.previsto, groupData.executado, ['#fde68a', '#007770'])} />
         </div>
       </div>
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 xl:col-span-2">
         <h3 className="text-lg font-bold text-slate-900 mb-6">Execução por Etapa</h3>
         <div className="h-72">
-          <Bar options={options} data={createData(stageData.labels, stageData.previsto, stageData.executado, ['#e2e8f0', '#00735C'])} />
+          <Bar options={options} data={createData(stageData.labels, stageData.previsto, stageData.executado, ['#e2e8f0', '#007770'])} />
         </div>
       </div>
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 xl:col-span-2">

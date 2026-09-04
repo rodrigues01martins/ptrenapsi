@@ -113,7 +113,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                   Código do Item
                 </label>
                 <select
-                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm appearance-none bg-slate-50"
+                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm appearance-none bg-slate-50"
                   value={itemCode}
                   onChange={e => setItemCode(e.target.value)}
                   required
@@ -130,7 +130,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1">
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-500">Categoria automática</span>
-                  <strong className={selectedItem ? 'text-[#00735C]' : 'text-slate-400'}>
+                  <strong className={selectedItem ? 'text-[#007770]' : 'text-slate-400'}>
                     {selectedItem?.category || '—'}
                   </strong>
                 </div>
@@ -161,7 +161,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                     NF / Documento
                   </label>
                   <input
-                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm"
+                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm"
                     value={nf}
                     onChange={e => setNf(e.target.value)}
                     type="text"
@@ -172,7 +172,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                     Fornecedor
                   </label>
                   <input
-                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm"
+                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm"
                     value={supplier}
                     onChange={e => setSupplier(e.target.value)}
                     type="text"
@@ -186,7 +186,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                   Descrição
                 </label>
                 <input
-                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm"
+                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm"
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   required
@@ -201,7 +201,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                     Valor (R$)
                   </label>
                   <input
-                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm font-bold"
+                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm font-bold"
                     value={amount}
                     onChange={e => setAmount(e.target.value)}
                     required
@@ -214,7 +214,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                     Data
                   </label>
                   <input
-                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm bg-white"
+                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm bg-white"
                     value={date}
                     onChange={e => setDate(e.target.value)}
                     required
@@ -253,7 +253,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                     setFile(e.target.files?.[0] || null);
                     if (e.target.files?.[0]) setDocumentRemoved(false);
                   }}
-                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#00735C]/10 file:text-[#00735C] cursor-pointer bg-slate-50 rounded-xl"
+                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#007770]/10 file:text-[#007770] cursor-pointer bg-slate-50 rounded-xl"
                 />
               </div>
 
@@ -263,7 +263,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                   Observações de Auditoria
                 </label>
                 <textarea
-                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm bg-slate-50 min-h-[80px]"
+                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm bg-slate-50 min-h-[80px]"
                   value={auditComment}
                   onChange={e => setAuditComment(e.target.value)}
                   placeholder="Instruções para o usuário..."
@@ -281,7 +281,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-[#00735C] text-white font-bold shadow-lg hover:bg-[#005c4a] transition-all"
+                  className="px-6 py-2.5 rounded-xl bg-[#007770] text-white font-bold shadow-lg hover:bg-[#005f59] transition-all"
                 >
                   Salvar Alterações
                 </button>

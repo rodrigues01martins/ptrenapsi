@@ -62,7 +62,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
 
       {/* Cabeçalho */}
       <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
-        <div className="bg-[#00735C]/10 p-2.5 rounded-xl text-[#00735C]">
+        <div className="bg-[#007770]/10 p-2.5 rounded-xl text-[#007770]">
           <FilePlus2 size={42} />
         </div>
         <div>
@@ -81,14 +81,14 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
 
         {/* Código do Item */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <Tag size={18} className="text-[#00735C]" fill="#00735C" />
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#007770]">
+            <Tag size={18} className="text-[#007770]" fill="#007770" />
             Código do Item
           </label>
           <select
             value={formData.itemCode}
             onChange={e => setFormData(prev => ({ ...prev, itemCode: e.target.value }))}
-            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#00735C] outline-none"
+            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#007770] outline-none"
           >
             <option value="">Selecione um item do plano...</option>
             {budgetItems.map(item => (
@@ -99,8 +99,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
 
         {/* NF / Documento */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <FileText size={18} className="text-[#00735C]" fill="#00735C" />
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#007770]">
+            <FileText size={18} className="text-[#007770]" fill="#007770" />
             NF / Documento
           </label>
           <input
@@ -113,8 +113,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
 
         {/* Fornecedor */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <Truck size={18} className="text-[#00735C]" fill="#00735C" />
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#007770]">
+            <Truck size={18} className="text-[#007770]" fill="#007770" />
             Fornecedor
           </label>
           <input
@@ -127,22 +127,22 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
 
         {/* Valor */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <DollarSign size={18} className="text-[#00735C]" fill="#00735C" />
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#007770]">
+            <DollarSign size={18} className="text-[#007770]" fill="#007770" />
             Valor (R$)
           </label>
           <input
             type="text" placeholder="0,00"
             value={formData.amount}
             onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm font-bold text-[#00735C]"
+            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm font-bold text-[#007770]"
           />
         </div>
 
         {/* Data */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <Calendar size={18} className="text-[#00735C]" fill="#00735C" />
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#007770]">
+            <Calendar size={18} className="text-[#007770]" fill="#007770" />
             Data da Despesa
           </label>
           <input
@@ -155,21 +155,21 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
 
         {/* Documentação */}
         <div className="md:col-span-2 space-y-2">
-          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <FileUp size={18} className="text-[#00735C]" fill="#00735C" />
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#007770]">
+            <FileUp size={18} className="text-[#007770]" fill="#007770" />
             Documentação (PDF)
           </label>
           <input
             type="file" accept="application/pdf"
             onChange={handleFileChange}
-            className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#00735C]/10 file:text-[#00735C] cursor-pointer bg-slate-50 rounded-xl"
+            className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#007770]/10 file:text-[#007770] cursor-pointer bg-slate-50 rounded-xl"
           />
         </div>
 
         {/* Descrição */}
         <div className="md:col-span-2 space-y-2">
-          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <AlignLeft size={18} className="text-[#00735C]" fill="#00735C" />
+          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#007770]">
+            <AlignLeft size={18} className="text-[#007770]" fill="#007770" />
             <strong>Descrição</strong>
             <span className="font-normal normal-case text-slate-400 text-xs">(Conforme especificado na Nota Fiscal/Comprovante)</span>
           </label>
@@ -185,7 +185,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
 
       <button
         type="submit"
-        className="w-full mt-8 bg-[#00735C] text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-[#005c4a] transition-all"
+        className="w-full mt-8 bg-[#007770] text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-[#005f59] transition-all"
       >
         Salvar Lançamento
       </button>

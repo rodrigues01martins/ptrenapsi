@@ -13,7 +13,6 @@ import { EditModal } from './components/EditModal';
 import { Toast } from './components/Toast';
 import { Login } from './components/Login';
 import { BudgetItem, LedgerEntry } from './types';
-import { User as UserIcon } from 'lucide-react';
 import RelatorioFinal from './components/RelatorioFinal';
 import { UserManagement } from './components/UserManagement';
 
@@ -283,7 +282,7 @@ export function App() {
   }, [isAuthReady, canAccessEntry, canAccessReport, canAccessRelatorio, isAdmin]);
 
   if (!isAuthReady) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#00735C]">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#007770]">
       Iniciando...
     </div>
   );
@@ -292,30 +291,24 @@ export function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
+    <div className="min-h-screen bg-[#f8fafc]">
+      <Header
+        isAdmin={isAdmin}
+        onNavigateItens={() => setActiveTab('itens')}
+        onNavigateUsuarios={() => setActiveTab('gestao')}
+        onExportCSV={handleExportCSV}
+        onSignOut={() => signOut(auth)}
+      />
+
+      <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-
-        {/* ── Barra superior ── */}
-        <div className="flex justify-end mb-4 gap-4 items-center">
-          <div className="flex items-center gap-2 text-slate-500 bg-white px-3 py-1 rounded-full border text-xs font-bold">
-            <UserIcon size={12} /> {user?.email || 'Modo Visualização'}
-          </div>
-          <button
-            onClick={() => signOut(auth)}
-            className="text-red-600 text-xs font-bold hover:bg-red-50 p-1 px-3 rounded-full transition-all"
-          >
-            Sair
-          </button>
-        </div>
-
-        <Header onExportCSV={handleExportCSV} />
 
         {/* ── Tabs ── */}
         <div className="mb-8 flex gap-3 flex-wrap">
           {(isAdmin || canAccessEntry) && (
             <button
               onClick={() => setActiveTab('entry')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
             >
               Incluir Registros
             </button>
@@ -323,27 +316,9 @@ export function App() {
           {(isAdmin || canAccessReport) && (
             <button
               onClick={() => setActiveTab('report')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
             >
               Ambiente do Relatório
-            </button>
-          )}
-          {/* Aba Itens do Plano — visível apenas para admins */}
-          {isAdmin && (
-            <button
-              onClick={() => setActiveTab('itens')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'itens' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
-            >
-              Itens do Plano
-            </button>
-          )}
-          {/* Aba Gestão de Usuários — visível apenas para admins */}
-          {isAdmin && (
-            <button
-              onClick={() => setActiveTab('gestao')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'gestao' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
-            >
-              Gestão de Usuários
             </button>
           )}
 
@@ -351,7 +326,7 @@ export function App() {
           {canAccessRelatorio && (
             <button
               onClick={() => setActiveTab('relatorio')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'relatorio' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'relatorio' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
             >
               Relatório Final
             </button>
@@ -423,6 +398,7 @@ export function App() {
           </div>
         )}
 
+      </div>
       </div>
 
       {editingEntry && (

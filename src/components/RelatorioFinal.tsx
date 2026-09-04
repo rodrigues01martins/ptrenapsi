@@ -147,18 +147,18 @@ const Field: React.FC<{
     <label className="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">
       {label}
       {hint && <span className="font-normal text-slate-400 normal-case ml-1 italic">{hint}</span>}
-      {locked && <span className="ml-2 px-2 py-0.5 bg-[#00735C]/10 text-[#00735C] text-[10px] font-bold rounded-full uppercase tracking-wide">fixo</span>}
+      {locked && <span className="ml-2 px-2 py-0.5 bg-[#007770]/10 text-[#007770] text-[10px] font-bold rounded-full uppercase tracking-wide">fixo</span>}
     </label>
     {textarea ? (
       <textarea
-        className={`w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#00735C] outline-none resize-y min-h-[80px] ${locked ? 'bg-slate-50 text-slate-400 cursor-not-allowed' : 'bg-white'}`}
+        className={`w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#007770] outline-none resize-y min-h-[80px] ${locked ? 'bg-slate-50 text-slate-400 cursor-not-allowed' : 'bg-white'}`}
         value={value} readOnly={locked}
         onChange={e => onChange?.(e.target.value)}
       />
     ) : (
       <input
         type={type}
-        className={`w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#00735C] outline-none ${locked ? 'bg-slate-50 text-slate-400 cursor-not-allowed' : 'bg-white'}`}
+        className={`w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#007770] outline-none ${locked ? 'bg-slate-50 text-slate-400 cursor-not-allowed' : 'bg-white'}`}
         value={value} readOnly={locked}
         onChange={e => onChange?.(e.target.value)}
       />
@@ -168,7 +168,7 @@ const Field: React.FC<{
 
 const SectionHead = ({ n, title, sub }: { n: number; title: string; sub: string }) => (
   <div className="mb-6">
-    <div className="text-xs font-mono text-[#00735C] tracking-widest uppercase mb-1">Seção {n} de {STEPS.length}</div>
+    <div className="text-xs font-mono text-[#007770] tracking-widest uppercase mb-1">Seção {n} de {STEPS.length}</div>
     <h1 className="text-2xl font-bold text-slate-800 mb-2">{title}</h1>
     <p className="text-sm text-slate-500 max-w-2xl">{sub}</p>
   </div>
@@ -183,7 +183,7 @@ const Card = ({ title, children }: { title?: string; children: React.ReactNode }
 
 const tableHeaderCls = "text-left text-xs font-bold text-slate-500 uppercase p-2 border-b border-slate-200";
 const tableCellCls   = "p-2 text-slate-700 text-sm";
-const inputCls       = "w-full border border-slate-200 rounded-lg p-1.5 text-xs focus:ring-2 focus:ring-[#00735C] outline-none";
+const inputCls       = "w-full border border-slate-200 rounded-lg p-1.5 text-xs focus:ring-2 focus:ring-[#007770] outline-none";
 
 /* ── Seção 1: Identificação + configuração da parceria (admin) ── */
 const SecIdent = ({ s, set, partnership, setPartnership, isAdmin, onSavePartnership, saving }: {
@@ -233,7 +233,7 @@ const SecIdent = ({ s, set, partnership, setPartnership, isAdmin, onSavePartners
               onChange={v => setPartnership(p => ({ ...p, despesasPrevisto: { ...p.despesasPrevisto, encargos: v } }))} />
           </div>
           <button type="button" onClick={onSavePartnership} disabled={saving}
-            className="mt-2 flex items-center gap-2 bg-[#00735C] text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:bg-[#005c4a] transition-all disabled:opacity-60">
+            className="mt-2 flex items-center gap-2 bg-[#007770] text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:bg-[#005f59] transition-all disabled:opacity-60">
             <Save size={14} /> {saving ? 'Salvando...' : 'Salvar dados da parceria'}
           </button>
         </>
@@ -277,7 +277,7 @@ const SecExecucao = ({ s, set }: { s: AppState; set: (fn: (p: AppState) => AppSt
                 <td className="p-2"><input className={inputCls} value={e.prazo} placeholder="Ex: 30 dias"
                   onChange={ev => set(p => { const arr=[...p.execucao.entregas]; arr[i]={...arr[i],prazo:ev.target.value}; return {...p,execucao:{...p.execucao,entregas:arr}}; })} /></td>
                 <td className="p-2">
-                  <select className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#00735C] outline-none bg-white"
+                  <select className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#007770] outline-none bg-white"
                     value={e.situacao}
                     onChange={ev => set(p => { const arr=[...p.execucao.entregas]; arr[i]={...arr[i],situacao:ev.target.value}; return {...p,execucao:{...p.execucao,entregas:arr}}; })}>
                     <option value="">—</option><option>Concluída</option><option>Em andamento</option><option>Pendente</option>
@@ -318,11 +318,11 @@ const SecPublico = ({ s, set }: { s: AppState; set: (fn: (p: AppState) => AppSta
                 <td className="p-2 text-slate-700 text-sm whitespace-nowrap">{l.label}</td>
                 {l.valores.map((v,j) => (
                   <td key={j} className="p-1">
-                    <input className="w-16 border border-slate-200 rounded p-1.5 text-xs text-center focus:ring-2 focus:ring-[#00735C] outline-none" value={v}
+                    <input className="w-16 border border-slate-200 rounded p-1.5 text-xs text-center focus:ring-2 focus:ring-[#007770] outline-none" value={v}
                       onChange={ev => set(p => { const linhas=p.publico.linhas.map((ln,li)=>li===i?{...ln,valores:ln.valores.map((vv,ji)=>ji===j?ev.target.value:vv)}:ln); return {...p,publico:{...p.publico,linhas}}; })} />
                   </td>
                 ))}
-                <td className="p-1"><input className="w-20 border border-slate-200 rounded p-1.5 text-xs text-center focus:ring-2 focus:ring-[#00735C] outline-none" value={l.total}
+                <td className="p-1"><input className="w-20 border border-slate-200 rounded p-1.5 text-xs text-center focus:ring-2 focus:ring-[#007770] outline-none" value={l.total}
                   onChange={ev => set(p => { const linhas=p.publico.linhas.map((ln,li)=>li===i?{...ln,total:ev.target.value}:ln); return {...p,publico:{...p.publico,linhas}}; })} /></td>
               </tr>
             ))}
@@ -446,7 +446,7 @@ const DynTable = ({ rows, cols, onAdd, onDel, onEdit }: {
         </tbody>
       </table>
     </div>
-    <button onClick={onAdd} className="mt-3 px-4 py-2 bg-[#00735C]/10 border border-[#00735C]/30 text-[#00735C] text-xs font-bold rounded-lg hover:bg-[#00735C]/20 transition-colors">
+    <button onClick={onAdd} className="mt-3 px-4 py-2 bg-[#007770]/10 border border-[#007770]/30 text-[#007770] text-xs font-bold rounded-lg hover:bg-[#007770]/20 transition-colors">
       + Adicionar linha
     </button>
   </div>
@@ -491,7 +491,7 @@ const SecFinanceiro = ({ s, set }: { s: AppState; set: (fn: (p: AppState) => App
               <tr key={i} className="border-b border-slate-100">
                 <td className="p-2 text-slate-700 text-sm">
                   {d.grupo}
-                  <span className="ml-2 px-1.5 py-0.5 bg-[#00735C]/10 text-[#00735C] text-[10px] font-bold rounded-full">fixo</span>
+                  <span className="ml-2 px-1.5 py-0.5 bg-[#007770]/10 text-[#007770] text-[10px] font-bold rounded-full">fixo</span>
                 </td>
                 <td className="p-2 text-slate-500 text-sm">{d.previsto}</td>
                 {(['executado','pct','variacao'] as const).map(f=>(
@@ -535,7 +535,7 @@ const SecConclusao = ({ s, set }: { s: AppState; set: (fn: (p: AppState) => AppS
     <Card>
       <div className="mb-4">
         <label className="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Situação do objeto</label>
-        <select className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#00735C] outline-none bg-white"
+        <select className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#007770] outline-none bg-white"
           value={s.conclusao.status} onChange={e=>set(p=>({...p,conclusao:{...p.conclusao,status:e.target.value}}))}>
           <option value="integralmente cumprido">Integralmente cumprido</option>
           <option value="cumprido com ressalvas">Cumprido com ressalvas</option>
@@ -576,7 +576,7 @@ const SecAnexos = ({ s, set, onPreview }: { s: AppState; set: (fn: (p: AppState)
       {ANEXOS_LIST.map((a,i) => (
         <div key={i} className="flex items-start gap-3 mb-3">
           <button onClick={()=>set(p=>{const checks=[...p.anexos.checks]; checks[i]=!checks[i]; return {...p,anexos:{checks}};})}
-            className="mt-0.5 text-[#00735C] hover:text-[#005c4a] transition-colors flex-shrink-0">
+            className="mt-0.5 text-[#007770] hover:text-[#005f59] transition-colors flex-shrink-0">
             {s.anexos.checks[i] ? <CheckSquare size={18}/> : <Square size={18} className="text-slate-300"/>}
           </button>
           <span className="text-sm text-slate-700"><strong className="text-slate-500">Anexo {romanize(i+1)}</strong> — {a}</span>
@@ -585,7 +585,7 @@ const SecAnexos = ({ s, set, onPreview }: { s: AppState; set: (fn: (p: AppState)
     </Card>
     <div className="flex justify-end mt-4">
       <button onClick={onPreview}
-        className="px-6 py-3 bg-[#00735C] text-white font-bold rounded-xl shadow-lg hover:bg-[#005c4a] transition-all">
+        className="px-6 py-3 bg-[#007770] text-white font-bold rounded-xl shadow-lg hover:bg-[#005f59] transition-all">
         Gerar relatório final →
       </button>
     </div>
@@ -605,7 +605,7 @@ const Preview = ({ s, p, onBack }: { s: AppState; p: PartnershipSettings; onBack
         <button onClick={onBack} className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all">
           <ArrowLeft size={16}/> Voltar ao formulário
         </button>
-        <button onClick={()=>window.print()} className="flex items-center gap-2 px-5 py-2 bg-[#00735C] text-white font-bold rounded-xl hover:bg-[#005c4a] transition-all text-sm shadow-lg">
+        <button onClick={()=>window.print()} className="flex items-center gap-2 px-5 py-2 bg-[#007770] text-white font-bold rounded-xl hover:bg-[#005f59] transition-all text-sm shadow-lg">
           <Printer size={16}/> Imprimir / Salvar PDF
         </button>
       </div>
@@ -754,7 +754,7 @@ export default function RelatorioFinal({ isAdmin, showToast }: RelatorioFinalPro
     <div className="flex gap-6 items-start">
 
       {/* ── Sidebar verde SEDS ── */}
-      <aside className="w-64 bg-[#00735C] text-white rounded-2xl shadow-lg flex-shrink-0 sticky top-4 overflow-hidden">
+      <aside className="w-64 bg-[#007770] text-white rounded-2xl shadow-lg flex-shrink-0 sticky top-4 overflow-hidden">
 
         {/* Cabeçalho sidebar */}
         <div className="p-5 border-b border-white/15">
@@ -787,7 +787,7 @@ export default function RelatorioFinal({ isAdmin, showToast }: RelatorioFinalPro
               <button key={s.id} onClick={()=>setCurrentStep(i)}
                 className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-xl mb-0.5 text-left transition-all ${active ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-white/70'}`}>
                 <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[9px] flex-shrink-0 mt-0.5 font-bold
-                  ${done ? 'bg-[#FCD951] border-[#FCD951] text-[#00735C]' : active ? 'border-white text-white' : 'border-white/30 text-white/40'}`}>
+                  ${done ? 'bg-[#FCD951] border-[#FCD951] text-[#007770]' : active ? 'border-white text-white' : 'border-white/30 text-white/40'}`}>
                   {done ? '✓' : i+1}
                 </span>
                 <span className={`text-xs leading-tight pt-0.5 ${active ? 'font-bold' : ''}`}>{s.title}</span>
@@ -820,7 +820,7 @@ export default function RelatorioFinal({ isAdmin, showToast }: RelatorioFinalPro
               <ChevronLeft size={16}/> Voltar
             </button>
             <button onClick={()=>setCurrentStep(i=>Math.min(STEPS.length-1,i+1))}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#00735C] text-white font-bold rounded-xl hover:bg-[#005c4a] transition-all text-sm shadow-lg">
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#007770] text-white font-bold rounded-xl hover:bg-[#005f59] transition-all text-sm shadow-lg">
               Continuar <ChevronRight size={16}/>
             </button>
           </div>

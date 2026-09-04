@@ -76,7 +76,7 @@ export function Ledger({
 
           {/* Categoria */}
           <select
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C] min-w-[150px]"
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#007770] min-w-[150px]"
             value={filterCategory}
             onChange={e => { setFilterCategory(e.target.value); setFilterItemCode(''); }}
           >
@@ -86,7 +86,7 @@ export function Ledger({
 
           {/* Item do plano */}
           <select
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C] min-w-[220px] flex-1 max-w-xs"
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#007770] min-w-[220px] flex-1 max-w-xs"
             value={filterItemCode}
             onChange={e => setFilterItemCode(e.target.value)}
           >
@@ -102,7 +102,7 @@ export function Ledger({
 
           {/* Ordenação */}
           <select
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]"
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#007770]"
             value={sortMode}
             onChange={e => setSortMode(e.target.value)}
           >
@@ -126,8 +126,8 @@ export function Ledger({
                 onClick={() => setFilterStatus(status)}
                 className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border whitespace-nowrap ${
                   filterStatus === status
-                    ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C]'
+                    ? 'bg-[#007770] text-white border-[#007770] shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#007770]'
                 }`}
               >
                 {status}
@@ -172,7 +172,7 @@ export function Ledger({
                 <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                   <td className="p-4 text-sm text-slate-600 whitespace-nowrap">{entry.date}</td>
                   <td className="p-4 whitespace-nowrap">
-                    <span className="px-2 py-1 rounded-md bg-[#00735C]/10 text-[#00735C] text-[11px] font-bold">
+                    <span className="px-2 py-1 rounded-md bg-[#007770]/10 text-[#007770] text-[11px] font-bold">
                       {entry.itemCode}
                     </span>
                   </td>
@@ -224,7 +224,7 @@ export function Ledger({
                   </td>
                   <td className="p-4 text-center">
                     <button
-                      className="p-2 text-slate-400 hover:text-[#00735C] transition-colors"
+                      className="p-2 text-slate-400 hover:text-[#007770] transition-colors"
                       onClick={() => onEdit(entry)}
                       title="Editar"
                     >

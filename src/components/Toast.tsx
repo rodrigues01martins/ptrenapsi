@@ -17,7 +17,7 @@ export const Toast: React.FC<ToastProps> = ({ message, isVisible }) => {
           exit={{ y: 100, opacity: 0 }}
           className="fixed bottom-8 right-8 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 flex items-center gap-3 max-w-md"
         >
-          <div className="h-8 w-8 bg-[#00735C] rounded-full flex items-center justify-center shrink-0">
+          <div className="h-8 w-8 bg-[#007770] rounded-full flex items-center justify-center shrink-0">
             <CheckCircle size={18} />
           </div>
           <div>

@@ -22,7 +22,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
 }) => {
   const cards = [
     { label: 'Total Previsto', value: fmt.format(totalOrcado), color: 'text-slate-900' },
-    { label: 'Total Executado', value: fmt.format(totalExecutado), color: 'text-[#00735C]' },
+    { label: 'Total Executado', value: fmt.format(totalExecutado), color: 'text-[#007770]' },
     { label: 'Saldo Disponível', value: fmt.format(totalSaldo), color: 'text-emerald-600' },
     { label: '% Execução', value: `${percentTotal.toFixed(1)}%`, color: 'text-[#7a5c00]' },
     { label: 'Itens Críticos', value: criticalItems.toString(), color: 'text-red-600' },

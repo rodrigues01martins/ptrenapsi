@@ -100,8 +100,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
     <div>
       {/* Cabeçalho */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="bg-[#00735C]/10 p-2.5 rounded-xl">
-          <Users size={28} className="text-[#00735C]" />
+        <div className="bg-[#007770]/10 p-2.5 rounded-xl">
+          <Users size={28} className="text-[#007770]" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">Gestão de Usuários</h2>
@@ -113,7 +113,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Total de usuários', value: users.length, color: 'text-slate-800' },
-          { label: 'Administradores', value: users.filter(u => u.role === 'admin').length, color: 'text-[#00735C]' },
+          { label: 'Administradores', value: users.filter(u => u.role === 'admin').length, color: 'text-[#007770]' },
           { label: 'Acesso Relatório Final', value: users.filter(u => u.canAccessRelatorio).length, color: 'text-blue-600' },
           { label: 'Sem permissão especial', value: users.filter(u => !u.canAccessRelatorio && u.role !== 'admin').length, color: 'text-slate-400' },
         ].map((c, i) => (
@@ -132,7 +132,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
           placeholder="Buscar por e-mail ou nome..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#00735C] outline-none"
+          className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#007770] outline-none"
         />
       </div>
 
@@ -186,18 +186,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
                 </tr>
               ) : (
                 filtered.map(u => (
-                  <tr key={u.uid} className={`hover:bg-slate-50 transition-colors ${u.uid === currentUserUid ? 'bg-[#00735C]/5' : ''}`}>
+                  <tr key={u.uid} className={`hover:bg-slate-50 transition-colors ${u.uid === currentUserUid ? 'bg-[#007770]/5' : ''}`}>
                     {/* Usuário */}
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#00735C]/10 flex items-center justify-center text-[#00735C] font-bold text-xs flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[#007770]/10 flex items-center justify-center text-[#007770] font-bold text-xs flex-shrink-0">
                           {u.email.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <p className="font-semibold text-slate-800 text-sm">
                             {u.email}
                             {u.uid === currentUserUid && (
-                              <span className="ml-2 px-1.5 py-0.5 bg-[#00735C]/10 text-[#00735C] text-[10px] font-bold rounded-full">você</span>
+                              <span className="ml-2 px-1.5 py-0.5 bg-[#007770]/10 text-[#007770] text-[10px] font-bold rounded-full">você</span>
                             )}
                           </p>
                           {u.displayName && <p className="text-xs text-slate-400">{u.displayName}</p>}
@@ -220,7 +220,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
                         title={u.uid === currentUserUid ? 'Não é possível alterar sua própria função' : `Clique para mudar para ${u.role === 'admin' ? 'user' : 'admin'}`}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all
                           ${u.role === 'admin'
-                            ? 'bg-[#00735C]/10 text-[#00735C] hover:bg-[#00735C]/20'
+                            ? 'bg-[#007770]/10 text-[#007770] hover:bg-[#007770]/20'
                             : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}
                           ${u.uid === currentUserUid ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
@@ -237,7 +237,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
                         <button
                           onClick={() => togglePermission(u.uid, 'canAccessEntry', u.canAccessEntry)}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
-                            ${u.canAccessEntry ? 'bg-[#00735C]' : 'bg-slate-200'}`}
+                            ${u.canAccessEntry ? 'bg-[#007770]' : 'bg-slate-200'}`}
                           title={u.canAccessEntry ? 'Revogar acesso a Incluir Registros' : 'Liberar acesso a Incluir Registros'}
                         >
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
@@ -254,7 +254,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
                         <button
                           onClick={() => togglePermission(u.uid, 'canAccessReport', u.canAccessReport)}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
-                            ${u.canAccessReport ? 'bg-[#00735C]' : 'bg-slate-200'}`}
+                            ${u.canAccessReport ? 'bg-[#007770]' : 'bg-slate-200'}`}
                           title={u.canAccessReport ? 'Revogar acesso a Ambiente do Relatório' : 'Liberar acesso a Ambiente do Relatório'}
                         >
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
@@ -271,7 +271,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
                         <button
                           onClick={() => togglePermission(u.uid, 'canAccessRelatorio', u.canAccessRelatorio)}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
-                            ${u.canAccessRelatorio ? 'bg-[#00735C]' : 'bg-slate-200'}`}
+                            ${u.canAccessRelatorio ? 'bg-[#007770]' : 'bg-slate-200'}`}
                           title={u.canAccessRelatorio ? 'Revogar acesso a Relatório Final' : 'Liberar acesso a Relatório Final'}
                         >
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform

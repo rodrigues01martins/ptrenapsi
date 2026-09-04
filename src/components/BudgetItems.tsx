@@ -75,8 +75,8 @@ export const BudgetItems: React.FC<BudgetItemsProps> = ({ budgetItems, showToast
     <div className="space-y-6">
       {/* Cabeçalho */}
       <div className="flex items-center gap-3">
-        <div className="bg-[#00735C]/10 p-2.5 rounded-xl">
-          <ClipboardList size={28} className="text-[#00735C]" />
+        <div className="bg-[#007770]/10 p-2.5 rounded-xl">
+          <ClipboardList size={28} className="text-[#007770]" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">Itens do Plano de Trabalho</h2>
@@ -92,7 +92,7 @@ export const BudgetItems: React.FC<BudgetItemsProps> = ({ budgetItems, showToast
         </div>
         <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-slate-500 font-semibold mb-1">Total previsto</p>
-          <p className="text-2xl font-bold text-[#00735C]">{fmt.format(totalPrevisto)}</p>
+          <p className="text-2xl font-bold text-[#007770]">{fmt.format(totalPrevisto)}</p>
         </div>
       </div>
 
@@ -151,7 +151,7 @@ export const BudgetItems: React.FC<BudgetItemsProps> = ({ budgetItems, showToast
               type="text" placeholder="0,00"
               value={form.value}
               onChange={e => setForm(p => ({ ...p, value: e.target.value }))}
-              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-[#00735C]"
+              className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold text-[#007770]"
             />
           </div>
           <div className="space-y-1 md:col-span-2">
@@ -166,7 +166,7 @@ export const BudgetItems: React.FC<BudgetItemsProps> = ({ budgetItems, showToast
         </div>
         <button
           type="submit"
-          className="mt-6 flex items-center gap-2 bg-[#00735C] text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-[#005c4a] transition-all"
+          className="mt-6 flex items-center gap-2 bg-[#007770] text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-[#005f59] transition-all"
         >
           {editingId ? <Check size={16} /> : <Plus size={16} />}
           {editingId ? 'Salvar alterações' : 'Adicionar item'}
@@ -198,14 +198,14 @@ export const BudgetItems: React.FC<BudgetItemsProps> = ({ budgetItems, showToast
                 </tr>
               ) : budgetItems.map(item => (
                 <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="p-4 font-mono text-xs font-bold text-[#00735C]">{item.id}</td>
+                  <td className="p-4 font-mono text-xs font-bold text-[#007770]">{item.id}</td>
                   <td className="p-4 text-xs text-slate-600 max-w-[160px] truncate" title={item.stage}>{item.stage}</td>
                   <td className="p-4 text-xs text-slate-600">{item.group}</td>
                   <td className="p-4 text-xs text-slate-600">{item.category}</td>
                   <td className="p-4 text-xs text-slate-600 max-w-[220px] truncate" title={item.desc}>{item.desc}</td>
                   <td className="p-4 text-right text-sm font-bold text-slate-800">{fmt.format(item.value)}</td>
                   <td className="p-4 text-center">
-                    <button onClick={() => startEdit(item)} className="p-2 text-slate-400 hover:text-[#00735C] transition-colors" title="Editar">
+                    <button onClick={() => startEdit(item)} className="p-2 text-slate-400 hover:text-[#007770] transition-colors" title="Editar">
                       <Edit size={14} />
                     </button>
                   </td>
