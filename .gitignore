@@ -137,3 +137,8 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Backups de migração de dados (contêm dados pessoais de aprendizes — nunca versionar)
+/backups/
+*-serviceAccountKey.json
+*-service-account.json
