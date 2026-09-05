@@ -1,14 +1,14 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 
-export type Dimension = 'financeiro' | 'metas';
+export type Dimension = 'financeiro' | 'metas' | 'apuracao';
 
 interface DimensionSelectProps {
   onSelect: (dimension: Dimension) => void;
 }
 
 interface DimensionOptionProps {
-  lines: [string, string];
+  lines: string[];
   onClick: () => void;
 }
 
@@ -18,7 +18,12 @@ const DimensionOption: React.FC<DimensionOptionProps> = ({ lines, onClick }) => 
     className="group w-full flex items-center justify-end gap-4 py-3 text-right transition-all"
   >
     <span className="font-bold text-lg leading-tight text-[#007770] group-hover:text-[#005f59] group-hover:translate-x-[-4px] transition-all">
-      {lines[0]}<br />{lines[1]}
+      {lines.map((line, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <br />}
+          {line}
+        </React.Fragment>
+      ))}
     </span>
     <span className="shrink-0 w-11 h-11 rounded-full border-2 border-[#007770] flex items-center justify-center text-[#007770] transition-all group-hover:bg-[#007770] group-hover:text-white group-hover:scale-110">
       <ArrowRight size={20} />
@@ -49,6 +54,10 @@ export const DimensionSelect: React.FC<DimensionSelectProps> = ({ onSelect }) =>
           <DimensionOption
             lines={['Monitoramento', 'e Avaliação']}
             onClick={() => onSelect('metas')}
+          />
+          <DimensionOption
+            lines={['Apuração Mensal']}
+            onClick={() => onSelect('apuracao')}
           />
         </div>
 

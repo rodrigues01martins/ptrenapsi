@@ -13,6 +13,7 @@ import { EditModal } from './components/EditModal';
 import { Toast } from './components/Toast';
 import { Login } from './components/Login';
 import { DimensionSelect, Dimension } from './components/DimensionSelect';
+import { ComingSoon } from './components/ComingSoon';
 import { BudgetItem, LedgerEntry } from './types';
 import RelatorioFinal from './components/RelatorioFinal';
 import { UserManagement } from './components/UserManagement';
@@ -23,7 +24,7 @@ type MetasTab = 'relatorio' | 'gestao';
 function getStoredDimension(): Dimension | null {
   try {
     const v = sessionStorage.getItem('ptDimension');
-    return v === 'financeiro' || v === 'metas' ? v : null;
+    return v === 'financeiro' || v === 'metas' || v === 'apuracao' ? v : null;
   } catch {
     return null;
   }
@@ -309,16 +310,17 @@ export function App() {
     </div>
   );
   if (!user && !isDemoMode) {
-    if (!dimension) {
-      return <DimensionSelect onSelect={chooseDimension} />;
-    }
-    return (
-      <Login
-        onDemoMode={() => setIsDemoMode(true)}
-        showToast={showToast}
-        onBack={() => setDimension(null)}
-      />
-    );
+    return <Login onDemoMode={() => setIsDemoMode(true)} showToast={showToast} />;
+  }
+
+  // Usuário autenticado, mas ainda não escolheu a dimensão nesta sessão
+  if (!dimension) {
+    return <DimensionSelect onSelect={chooseDimension} />;
+  }
+
+  // ── Dimensão: Apuração Mensal — ainda não tem páginas próprias ────
+  if (dimension === 'apuracao') {
+    return <ComingSoon title="Apuração Mensal" onSignOut={handleSignOut} />;
   }
 
   // ── Dimensão: Monitoramento e Avaliação ──────────────────────────
