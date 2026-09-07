@@ -45,6 +45,16 @@ export function App() {
   const [canAccessRelatorio, setCanAccessRelatorio] = useState(false);
   const [canAccessEntry, setCanAccessEntry] = useState(false);
   const [canAccessReport, setCanAccessReport] = useState(false);
+  // Dimensão "Apuração Mensal" (Monitor de Aprendizes — Módulo 1)
+  const [canAccessUpload, setCanAccessUpload] = useState(false);
+  const [canAccessGerencial, setCanAccessGerencial] = useState(false);
+  const [canAccessRepasse, setCanAccessRepasse] = useState(false);
+  const [canAccessHistorico, setCanAccessHistorico] = useState(false);
+  // Dimensão "Monitoramento e Avaliação" (Monitor de Aprendizes — Módulo 2)
+  const [canAccessFrequencia, setCanAccessFrequencia] = useState(false);
+  const [canAccessAlcance, setCanAccessAlcance] = useState(false);
+  const [canAccessEixo3, setCanAccessEixo3] = useState(false);
+  const [canAccessEixo4, setCanAccessEixo4] = useState(false);
 
   // Lê papel/permissões do Firestore para o usuário logado
   useEffect(() => {
@@ -53,6 +63,14 @@ export function App() {
       setCanAccessRelatorio(false);
       setCanAccessEntry(false);
       setCanAccessReport(false);
+      setCanAccessUpload(false);
+      setCanAccessGerencial(false);
+      setCanAccessRepasse(false);
+      setCanAccessHistorico(false);
+      setCanAccessFrequencia(false);
+      setCanAccessAlcance(false);
+      setCanAccessEixo3(false);
+      setCanAccessEixo4(false);
       return;
     }
     const bootstrapAdmin = user.email === BOOTSTRAP_ADMIN_EMAIL;
@@ -64,11 +82,27 @@ export function App() {
       setCanAccessRelatorio(admin || data?.canAccessRelatorio === true);
       setCanAccessEntry(admin || data?.canAccessEntry === true);
       setCanAccessReport(admin || data?.canAccessReport === true);
+      setCanAccessUpload(admin || data?.canAccessUpload === true);
+      setCanAccessGerencial(admin || data?.canAccessGerencial === true);
+      setCanAccessRepasse(admin || data?.canAccessRepasse === true);
+      setCanAccessHistorico(admin || data?.canAccessHistorico === true);
+      setCanAccessFrequencia(admin || data?.canAccessFrequencia === true);
+      setCanAccessAlcance(admin || data?.canAccessAlcance === true);
+      setCanAccessEixo3(admin || data?.canAccessEixo3 === true);
+      setCanAccessEixo4(admin || data?.canAccessEixo4 === true);
     }).catch(() => {
       setIsAdmin(bootstrapAdmin);
       setCanAccessRelatorio(bootstrapAdmin);
       setCanAccessEntry(bootstrapAdmin);
       setCanAccessReport(bootstrapAdmin);
+      setCanAccessUpload(bootstrapAdmin);
+      setCanAccessGerencial(bootstrapAdmin);
+      setCanAccessRepasse(bootstrapAdmin);
+      setCanAccessHistorico(bootstrapAdmin);
+      setCanAccessFrequencia(bootstrapAdmin);
+      setCanAccessAlcance(bootstrapAdmin);
+      setCanAccessEixo3(bootstrapAdmin);
+      setCanAccessEixo4(bootstrapAdmin);
     });
   }, [user]);
 
@@ -89,6 +123,14 @@ export function App() {
             canAccessRelatorio: false,
             canAccessEntry: false,
             canAccessReport: false,
+            canAccessUpload: false,
+            canAccessGerencial: false,
+            canAccessRepasse: false,
+            canAccessHistorico: false,
+            canAccessFrequencia: false,
+            canAccessAlcance: false,
+            canAccessEixo3: false,
+            canAccessEixo4: false,
             createdAt: new Date().toISOString(),
           });
         }

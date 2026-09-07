@@ -14,6 +14,12 @@ service cloud.firestore {
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
          (request.auth.token.email == "juliano.mrodrigues@goias.gov.br"));
     }
+    // Permissão individual concedida na aba "Gestão de Usuários" (ex: canAccessUpload).
+    function hasPermission(field) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data[field] == true;
+    }
 
     // ── Usuários ─────────────────────────────────────────────
     match /users/{userId} {
@@ -61,17 +67,17 @@ service cloud.firestore {
     // Metadados de cada período importado via CSV.
     match /periodos/{periodoId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin() || hasPermission('canAccessUpload');
     }
 
     // Uma coleção por período, ex: colaboradores_2026_04. O Firestore não
     // permite misturar prefixo fixo com variável num único segmento do
     // caminho, então usamos um curinga genérico de coleção e filtramos
     // pelo prefixo do nome dentro da condição.
-    // Escrita restrita a admin até existir permissão por aba (canAccessUpload).
     match /{collectionId}/{colaboradorId} {
       allow read: if collectionId.matches('colaboradores_.*') && isAuthenticated();
-      allow create, update, delete: if collectionId.matches('colaboradores_.*') && isAdmin();
+      allow create, update, delete: if collectionId.matches('colaboradores_.*') &&
+        (isAdmin() || hasPermission('canAccessUpload'));
     }
   }
 }
