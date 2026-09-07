@@ -64,11 +64,14 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // Uma coleção por período, ex: colaboradores_2026_04.
+    // Uma coleção por período, ex: colaboradores_2026_04. O Firestore não
+    // permite misturar prefixo fixo com variável num único segmento do
+    // caminho, então usamos um curinga genérico de coleção e filtramos
+    // pelo prefixo do nome dentro da condição.
     // Escrita restrita a admin até existir permissão por aba (canAccessUpload).
-    match /colaboradores_{periodo}/{colaboradorId} {
-      allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin();
+    match /{collectionId}/{colaboradorId} {
+      allow read: if collectionId.matches('colaboradores_.*') && isAuthenticated();
+      allow create, update, delete: if collectionId.matches('colaboradores_.*') && isAdmin();
     }
   }
 }
