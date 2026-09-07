@@ -56,5 +56,19 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update, delete: if false;
     }
+
+    // ── Monitor de Aprendizes — dimensão "Apuração Mensal" ──────
+    // Metadados de cada período importado via CSV.
+    match /periodos/{periodoId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Uma coleção por período, ex: colaboradores_2026_04.
+    // Escrita restrita a admin até existir permissão por aba (canAccessUpload).
+    match /colaboradores_{periodo}/{colaboradorId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
   }
 }
