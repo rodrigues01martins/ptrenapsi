@@ -15,6 +15,7 @@ interface ApuracaoMensalProps {
   canAccessRepasse: boolean;
   canAccessHistorico: boolean;
   currentUserUid: string;
+  onGoHome: () => void;
   onSignOut: () => void;
   showToast: (message: string) => void;
 }
@@ -27,7 +28,7 @@ const TABS: { key: ApuracaoTab; label: string; can: (p: ApuracaoMensalProps) => 
 ];
 
 export const ApuracaoMensal: React.FC<ApuracaoMensalProps> = (props) => {
-  const { isAdmin, onSignOut, showToast, currentUserUid } = props;
+  const { isAdmin, onGoHome, onSignOut, showToast, currentUserUid } = props;
   const [activeTab, setActiveTab] = useState<ApuracaoTab | null>(null);
   const visibleTabs = TABS.filter(t => t.can(props));
 
@@ -47,6 +48,7 @@ export const ApuracaoMensal: React.FC<ApuracaoMensalProps> = (props) => {
         isAdmin={isAdmin}
         showItensButton={false}
         showExportButton={false}
+        onGoHome={onGoHome}
         onNavigateItens={() => {}}
         onNavigateUsuarios={() => setActiveTab('gestao')}
         onExportCSV={() => {}}

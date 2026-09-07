@@ -1,16 +1,18 @@
 import React from 'react';
+import { Home } from 'lucide-react';
 
 interface HeaderProps {
   isAdmin: boolean;
   showItensButton: boolean;
   showExportButton: boolean;
+  onGoHome: () => void;
   onNavigateItens: () => void;
   onNavigateUsuarios: () => void;
   onExportCSV: () => void;
   onSignOut: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ isAdmin, showItensButton, showExportButton, onNavigateItens, onNavigateUsuarios, onExportCSV, onSignOut }) => {
+export const Header: React.FC<HeaderProps> = ({ isAdmin, showItensButton, showExportButton, onGoHome, onNavigateItens, onNavigateUsuarios, onExportCSV, onSignOut }) => {
   return (
     <header className="w-full bg-white border-b border-slate-200">
       <div className="max-w-[1440px] mx-auto h-24 px-6 md:px-10 flex items-center justify-between gap-6">
@@ -23,6 +25,14 @@ export const Header: React.FC<HeaderProps> = ({ isAdmin, showItensButton, showEx
 
         {/* ── Menu ── */}
         <nav className="flex items-center gap-8">
+          <button
+            onClick={onGoHome}
+            title="Voltar para a seleção de dimensão"
+            className="flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-[#007770] transition-colors whitespace-nowrap"
+          >
+            <Home size={16} />
+            Início
+          </button>
           {isAdmin && showItensButton && (
             <button
               onClick={onNavigateItens}

@@ -169,6 +169,12 @@ export function App() {
     try { sessionStorage.removeItem('ptDimension'); } catch {}
   };
 
+  // Volta para a seleção de dimensão sem deslogar do Firebase Auth.
+  const handleGoHome = () => {
+    setDimension(null);
+    try { sessionStorage.removeItem('ptDimension'); } catch {}
+  };
+
   const showToast = (message: string) => {
     setToast({ message, isVisible: true });
     setTimeout(() => setToast(prev => ({ ...prev, isVisible: false })), 3000);
@@ -371,6 +377,7 @@ export function App() {
           canAccessRepasse={canAccessRepasse}
           canAccessHistorico={canAccessHistorico}
           currentUserUid={user?.uid || ''}
+          onGoHome={handleGoHome}
           onSignOut={handleSignOut}
           showToast={showToast}
         />
@@ -387,6 +394,7 @@ export function App() {
           isAdmin={isAdmin}
           showItensButton={false}
           showExportButton={false}
+          onGoHome={handleGoHome}
           onNavigateItens={() => {}}
           onNavigateUsuarios={() => setMetasTab('gestao')}
           onExportCSV={() => {}}
@@ -445,6 +453,7 @@ export function App() {
         isAdmin={isAdmin}
         showItensButton={true}
         showExportButton={true}
+        onGoHome={handleGoHome}
         onNavigateItens={() => setActiveTab('itens')}
         onNavigateUsuarios={() => setActiveTab('gestao')}
         onExportCSV={handleExportCSV}
