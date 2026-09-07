@@ -13,7 +13,7 @@ import { EditModal } from './components/EditModal';
 import { Toast } from './components/Toast';
 import { Login } from './components/Login';
 import { DimensionSelect, Dimension } from './components/DimensionSelect';
-import { ComingSoon } from './components/ComingSoon';
+import { ApuracaoMensal } from './components/ApuracaoMensal';
 import { BudgetItem, LedgerEntry } from './types';
 import RelatorioFinal from './components/RelatorioFinal';
 import { UserManagement } from './components/UserManagement';
@@ -360,9 +360,23 @@ export function App() {
     return <DimensionSelect onSelect={chooseDimension} />;
   }
 
-  // ── Dimensão: Apuração Mensal — ainda não tem páginas próprias ────
+  // ── Dimensão: Apuração Mensal ──────────────────────────────────
   if (dimension === 'apuracao') {
-    return <ComingSoon title="Apuração Mensal" onSignOut={handleSignOut} />;
+    return (
+      <>
+        <ApuracaoMensal
+          isAdmin={isAdmin}
+          canAccessUpload={canAccessUpload}
+          canAccessGerencial={canAccessGerencial}
+          canAccessRepasse={canAccessRepasse}
+          canAccessHistorico={canAccessHistorico}
+          currentUserUid={user?.uid || ''}
+          onSignOut={handleSignOut}
+          showToast={showToast}
+        />
+        <Toast message={toast.message} isVisible={toast.isVisible} />
+      </>
+    );
   }
 
   // ── Dimensão: Monitoramento e Avaliação ──────────────────────────
