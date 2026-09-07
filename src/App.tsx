@@ -14,12 +14,11 @@ import { Toast } from './components/Toast';
 import { Login } from './components/Login';
 import { DimensionSelect, Dimension } from './components/DimensionSelect';
 import { ApuracaoMensal } from './components/ApuracaoMensal';
+import { MonitoramentoAvaliacao } from './components/MonitoramentoAvaliacao';
 import { BudgetItem, LedgerEntry } from './types';
-import RelatorioFinal from './components/RelatorioFinal';
 import { UserManagement } from './components/UserManagement';
 
 type FinanceiroTab = 'entry' | 'report' | 'itens' | 'gestao';
-type MetasTab = 'relatorio' | 'gestao';
 
 function getStoredDimension(): Dimension | null {
   try {
@@ -36,7 +35,6 @@ export function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [dimension, setDimension] = useState<Dimension | null>(getStoredDimension);
   const [activeTab, setActiveTab] = useState<FinanceiroTab>('entry');
-  const [metasTab, setMetasTab] = useState<MetasTab>('relatorio');
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
@@ -389,60 +387,21 @@ export function App() {
   // ── Dimensão: Monitoramento e Avaliação ──────────────────────────
   if (dimension === 'metas') {
     return (
-      <div className="min-h-screen bg-[#f8fafc]">
-        <Header
+      <>
+        <MonitoramentoAvaliacao
           isAdmin={isAdmin}
-          showItensButton={false}
-          showExportButton={false}
+          canAccessRelatorio={canAccessRelatorio}
+          canAccessFrequencia={canAccessFrequencia}
+          canAccessAlcance={canAccessAlcance}
+          canAccessEixo3={canAccessEixo3}
+          canAccessEixo4={canAccessEixo4}
+          currentUserUid={user?.uid || ''}
           onGoHome={handleGoHome}
-          onNavigateItens={() => {}}
-          onNavigateUsuarios={() => setMetasTab('gestao')}
-          onExportCSV={() => {}}
           onSignOut={handleSignOut}
+          showToast={showToast}
         />
-
-        <div className="p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
-
-            {isAdmin && (
-              <div className="mb-8 flex gap-3 flex-wrap">
-                <button
-                  onClick={() => setMetasTab('relatorio')}
-                  className={`px-6 py-2.5 rounded-xl font-bold transition-all ${metasTab === 'relatorio' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-                >
-                  Relatório Final
-                </button>
-                <button
-                  onClick={() => setMetasTab('gestao')}
-                  className={`px-6 py-2.5 rounded-xl font-bold transition-all ${metasTab === 'gestao' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-                >
-                  Gestão de Usuários
-                </button>
-              </div>
-            )}
-
-            {metasTab === 'relatorio' && (
-              canAccessRelatorio ? (
-                <RelatorioFinal isAdmin={isAdmin} showToast={showToast} />
-              ) : (
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                  <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
-                    <span className="text-3xl">🔒</span>
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-700 mb-2">Acesso restrito</h2>
-                  <p className="text-slate-400 text-sm">Esta seção é exclusiva para administradores ou usuários autorizados.</p>
-                </div>
-              )
-            )}
-
-            {metasTab === 'gestao' && isAdmin && (
-              <UserManagement currentUserUid={user?.uid || ''} />
-            )}
-          </div>
-        </div>
-
         <Toast message={toast.message} isVisible={toast.isVisible} />
-      </div>
+      </>
     );
   }
 
