@@ -5,6 +5,7 @@ import { baseFinanceira } from '../../services/classificacaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
+import NotaMetodologica from '../../components/monitor/ui/NotaMetodologica'
 import { Select } from '../../components/monitor/ui/Input'
 
 const SvgIcon = ({ path, size = 28 }) => (
@@ -182,6 +183,12 @@ export default function Frequencia() {
           color="teal"
         />
       </div>
+
+      <NotaMetodologica titulo="Por que este número pode ser maior que o de Apuração Mensal?">
+        <strong>Jovens Apurados na Competência</strong> inclui todos que tiveram vínculo em qualquer dia do
+        mês — mesmo quem foi desligado antes do fim dele. Para a posição final da competência (sem quem saiu
+        no meio do mês), veja <strong>Jovens Ativos</strong>, em Apuração Mensal → Gerencial.
+      </NotaMetodologica>
 
       {/* Indicadores com barra de progresso */}
       <p style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', fontFamily: 'var(--font-family)' }}>

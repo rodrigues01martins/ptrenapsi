@@ -6,6 +6,7 @@ import KpiCard from '../../components/monitor/ui/KpiCard'
 import ChartCard from '../../components/monitor/ui/ChartCard'
 import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
+import NotaMetodologica from '../../components/monitor/ui/NotaMetodologica'
 import { Select } from '../../components/monitor/ui/Input'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
@@ -118,6 +119,13 @@ export default function Gerencial() {
         <KpiCard icon={<SvgIcon path={ICONS.minus} />} label="Contratos Finalizados" value={agregados.contratos_finalizados} sub="no mês de referência" color="danger" />
         <KpiCard icon={<SvgIcon path={ICONS.map} />} label="Municípios Atendidos" value={agregados.municipios} sub="cidades com aprendizes" color="teal" />
       </div>
+
+      <NotaMetodologica titulo="Por que este número pode ser menor que o de Monitoramento e Avaliação?">
+        <strong>Jovens Ativos</strong> é a posição final da competência: exclui quem foi admitido e/ou desligado
+        durante o mês. Para o total de jovens que geraram custo ou participação em qualquer dia do mês —
+        mesmo os desligados no meio dele — veja <strong>Jovens Apurados na Competência</strong>, em
+        Monitoramento e Avaliação → Eixo 1 — Inclusão.
+      </NotaMetodologica>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <KpiCard icon={<SvgIcon path={ICONS.building} />} label="Órgãos e Entidades" value={agregados.lotacoes} sub="locais de lotação" color="blue" />
