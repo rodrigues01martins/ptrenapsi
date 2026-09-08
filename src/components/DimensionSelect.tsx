@@ -5,6 +5,7 @@ export type Dimension = 'financeiro' | 'metas' | 'apuracao';
 
 interface DimensionSelectProps {
   onSelect: (dimension: Dimension) => void;
+  onSignOut: () => void;
 }
 
 interface DimensionOptionProps {
@@ -31,7 +32,7 @@ const DimensionOption: React.FC<DimensionOptionProps> = ({ lines, onClick }) => 
   </button>
 );
 
-export const DimensionSelect: React.FC<DimensionSelectProps> = ({ onSelect }) => {
+export const DimensionSelect: React.FC<DimensionSelectProps> = ({ onSelect, onSignOut }) => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white">
 
@@ -45,7 +46,14 @@ export const DimensionSelect: React.FC<DimensionSelectProps> = ({ onSelect }) =>
       </div>
 
       {/* ── Seleção de dimensão à direita ── */}
-      <div className="flex-1 md:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-12">
+      <div className="flex-1 md:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-12 relative">
+        <button
+          onClick={onSignOut}
+          className="absolute top-6 right-6 sm:top-8 sm:right-8 text-slate-400 hover:text-[#007770] text-sm font-bold transition-colors"
+        >
+          Sair
+        </button>
+
         <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-center divide-y divide-slate-100">
           <DimensionOption
             lines={['Acompanhamento', 'Financeiro']}
