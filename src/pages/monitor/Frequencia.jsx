@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
 import { enriquecerDados, calcularAgregados, formatarPeriodo } from '../../services/csvService'
+import { baseFinanceira } from '../../services/classificacaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
@@ -95,7 +96,9 @@ export default function Frequencia() {
     buscarDadosPeriodo(periodoSel).then(dados => {
       const enriquecidos = enriquecerDados(dados)
       setDadosEnriquecidos(enriquecidos)
-      setAgregados(calcularAgregados(enriquecidos, periodoSel))
+      // Regra de ouro: base explícita = quem gerou custo/participação na
+      // competência (apuravelFinanceiro), nunca a base gerencial.
+      setAgregados(calcularAgregados(baseFinanceira(enriquecidos), periodoSel))
       setLoading(false)
     })
   }, [periodoSel])
@@ -108,9 +111,11 @@ export default function Frequencia() {
   // 1. Preenchimento de vagas
   const ind_vagas = (agregados.total_aprendizes / VAGAS_TOTAL) * 100
 
-  // 2. Participação regular (frequência)
-  const soma_freq_util = dadosEnriquecidos.reduce((s, r) => s + r._kpis.freq_util, 0)
-  const soma_freq_base = dadosEnriquecidos.reduce((s, r) => s + r._kpis.freq_base, 0)
+  // 2. Participação regular (frequência) — soma sobre a base financeira,
+  // para incluir os dias trabalhados por quem foi desligado no meio do mês.
+  const dadosFinanceiros = baseFinanceira(dadosEnriquecidos)
+  const soma_freq_util = dadosFinanceiros.reduce((s, r) => s + r._kpis.freq_util, 0)
+  const soma_freq_base = dadosFinanceiros.reduce((s, r) => s + r._kpis.freq_base, 0)
   const ind_freq = soma_freq_base > 0 ? (soma_freq_util / soma_freq_base) * 100 : 0
 
   // 3. Evasão antecipada
@@ -150,7 +155,7 @@ export default function Frequencia() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <KpiCard
           icon={<SvgIcon path={ICONS.vagas} />}
-          label="Aprendizes Ativos"
+          label="Jovens Apurados na Competência"
           value={agregados.total_aprendizes}
           sub={`de ${VAGAS_TOTAL.toLocaleString('pt-BR')} vagas disponíveis`}
           color="blue"
