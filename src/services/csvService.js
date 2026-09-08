@@ -3,15 +3,21 @@ import Papa from 'papaparse'
 // ============================================================
 // PARÂMETROS FIXOS DO SISTEMA
 // ============================================================
-export const VRM_JUNHO     = 10213922.53
-export const VRM_JULHO_DEZ =  9953150.00
-export const VL_UNIT_ORC   =     1956.54
-export const VAL_APU_CF    = 5000 * 395.040636  // 1.975.203,18
+// VRM (Valor Estimado de Repasse Mensal) varia por competência — cada mês
+// com valor próprio confirmado entra aqui explicitamente. Meses de 2026
+// sem valor específico lançado ainda usam VRM_PADRAO_2026 (Jul-Dez/2026).
+export const VRM_POR_COMPETENCIA = {
+  '2026-04': 12413819.37,
+  '2026-05': 11848229.76,
+  '2026-06': 10213922.53,
+}
+export const VRM_PADRAO_2026 = 9953150.00  // Jul-Dez/2026
+export const VL_UNIT_ORC     =    1956.54
+export const VAL_APU_CF      = 5000 * 395.040636  // 1.975.203,18
 
 export function getVRM(periodoISO) {
-  if (!periodoISO) return VRM_JULHO_DEZ
-  const mes = parseInt(periodoISO.split('-')[1], 10)
-  return mes === 6 ? VRM_JUNHO : VRM_JULHO_DEZ
+  if (!periodoISO) return VRM_PADRAO_2026
+  return VRM_POR_COMPETENCIA[periodoISO] ?? VRM_PADRAO_2026
 }
 
 // ============================================================
