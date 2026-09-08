@@ -57,7 +57,7 @@ export default function Button({
       }}
       onMouseEnter={e => {
         if (disabled || loading) return
-        if (variant === 'primary')     e.currentTarget.style.background = '#2a5247'
+        if (variant === 'primary')     e.currentTarget.style.background = '#005f59'
         if (variant === 'secondary')   e.currentTarget.style.background = 'var(--bg-subtle)'
         if (variant === 'ghost')       e.currentTarget.style.background = 'var(--bg-subtle)'
         if (variant === 'destructive') e.currentTarget.style.background = '#b91c1c'
