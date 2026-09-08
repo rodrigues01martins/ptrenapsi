@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
 import { enriquecerDados, calcularAgregados, formatMoeda, formatarPeriodo, VL_UNIT_ORC } from '../../services/csvService'
+import { baseFinanceira } from '../../services/classificacaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
@@ -39,7 +40,9 @@ export default function Repasse() {
     buscarDadosPeriodo(periodoSel).then(dados => {
       const enriquecidos = enriquecerDados(dados)
       setDadosEnriquecidos(enriquecidos)
-      setAgregados(calcularAgregados(enriquecidos, periodoSel))
+      // Regra de ouro: agregador financeiro nunca filtra por jovemAtivo.
+      // Base explícita = quem gerou custo na competência (apuravelFinanceiro).
+      setAgregados(calcularAgregados(baseFinanceira(enriquecidos), periodoSel))
       setLoading(false)
     })
   }, [periodoSel])
@@ -74,11 +77,11 @@ export default function Repasse() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
         <KpiCard icon={<SvgIcon path={ICONS.money} />} label="Valor Estimado de Repasse (VRM)" value={formatMoeda(agregados.vrm)} sub="Repasse Mensal Programado" color="blue" />
         <KpiCard icon={<SvgIcon path={ICONS.fixed} />} label="VRM por Jovem" value={formatMoeda(VL_UNIT_ORC)} sub="valor fixo unitário" color="blue" />
-        <KpiCard icon={<SvgIcon path={ICONS.calc} />} label="Valor Médio por Jovem" value={formatMoeda(vl_medio_jovem)} sub="VAR ÷ total de aprendizes" color="teal" />
+        <KpiCard icon={<SvgIcon path={ICONS.calc} />} label="Valor Médio por Jovem" value={formatMoeda(vl_medio_jovem)} sub="VAR ÷ jovens apurados na competência" color="teal" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-        <KpiCard icon={<SvgIcon path={ICONS.var} />} label="Custeio Variável (VACV)" value={formatMoeda(agregados.val_apu_cv)} sub="itens × aprendizes ativos no mês" color="teal" />
+        <KpiCard icon={<SvgIcon path={ICONS.var} />} label="Custeio Variável (VACV)" value={formatMoeda(agregados.val_apu_cv)} sub="itens × jovens apurados na competência" color="teal" />
         <KpiCard icon={<SvgIcon path={ICONS.fixed} />} label="Custeio Fixo (VACF)" value={formatMoeda(agregados.val_apu_cf)} sub="5 mil × R$ 395,04" color="blue" />
         <KpiCard icon={<SvgIcon path={ICONS.nocont} />} label="Itens Não Continuados (VAINC)" value={formatMoeda(agregados.val_apu_inc)} sub="ocorrências do período" color="warn" />
       </div>

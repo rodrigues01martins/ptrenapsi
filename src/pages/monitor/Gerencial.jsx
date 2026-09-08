@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
 import { enriquecerDados, calcularAgregados, formatarPeriodo } from '../../services/csvService'
+import { baseGerencial, baseFinanceira } from '../../services/classificacaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import ChartCard from '../../components/monitor/ui/ChartCard'
 import Loader from '../../components/monitor/ui/Loader'
@@ -52,13 +53,24 @@ export default function Gerencial() {
     buscarDadosPeriodo(periodoSel).then(dados => {
       const enriquecidos = enriquecerDados(dados)
       setDadosEnriquecidos(enriquecidos)
-      setAgregados(calcularAgregados(enriquecidos, periodoSel))
+      // Agregador financeiro/eventos: base explícita = quem gerou custo na
+      // competência (nunca a base gerencial — regra de ouro).
+      setAgregados(calcularAgregados(baseFinanceira(enriquecidos), periodoSel))
       setLoading(false)
     })
   }, [periodoSel])
 
   if (loading) return <Loader message="Calculando indicadores..." />
   if (!agregados) return <EmptyState title="Nenhum dado encontrado" description="Faça upload de um CSV na aba Upload primeiro." />
+
+  // Indicador GERENCIAL: quem terminou a competência vinculado ao programa
+  // (posição final). Não inclui quem foi desligado no meio do mês, mesmo
+  // que tenha gerado custo — esse é o número da base financeira, acima.
+  const jovensAtivos = baseGerencial(dadosEnriquecidos).length
+  const dataBaseFormatada = (() => {
+    const [ano, mes] = periodoSel.split('-').map(Number)
+    return new Date(ano, mes, 0).toLocaleDateString('pt-BR')
+  })()
 
   const munMap = {}
   dadosEnriquecidos.forEach(r => {
@@ -86,7 +98,7 @@ export default function Gerencial() {
             Indicadores Gerenciais
           </h2>
           <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px', fontFamily: 'var(--font-family)' }}>
-            {formatarPeriodo(periodoSel)} · {agregados.total_aprendizes} aprendizes monitorados
+            {formatarPeriodo(periodoSel)} · {jovensAtivos} jovens ativos
           </p>
         </div>
         <Select
@@ -101,7 +113,7 @@ export default function Gerencial() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-        <KpiCard icon={<SvgIcon path={ICONS.users} />} label="Total de Aprendizes" value={agregados.total_aprendizes} sub="no período" color="blue" />
+        <KpiCard icon={<SvgIcon path={ICONS.users} />} label={`Jovens Ativos em ${dataBaseFormatada} (posição final)`} value={jovensAtivos} sub="não inclui quem foi desligado neste mês" color="blue" />
         <KpiCard icon={<SvgIcon path={ICONS.plus} />} label="Contratos Iniciados" value={agregados.contratos_iniciados} sub="no mês de referência" color="green" />
         <KpiCard icon={<SvgIcon path={ICONS.minus} />} label="Contratos Finalizados" value={agregados.contratos_finalizados} sub="no mês de referência" color="danger" />
         <KpiCard icon={<SvgIcon path={ICONS.map} />} label="Municípios Atendidos" value={agregados.municipios} sub="cidades com aprendizes" color="teal" />
