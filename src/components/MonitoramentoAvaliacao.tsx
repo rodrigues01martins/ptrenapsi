@@ -70,14 +70,6 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
                 {t.label}
               </button>
             ))}
-            {isAdmin && (
-              <button
-                onClick={() => setActiveTab('gestao')}
-                className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'gestao' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-              >
-                Gestão de Usuários
-              </button>
-            )}
           </div>
 
           {!activeTab && (
