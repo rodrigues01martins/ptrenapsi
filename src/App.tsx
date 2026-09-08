@@ -15,7 +15,6 @@ import { Login } from './components/Login';
 import { DimensionSelect, Dimension } from './components/DimensionSelect';
 import { ApuracaoMensal } from './components/ApuracaoMensal';
 import { MonitoramentoAvaliacao } from './components/MonitoramentoAvaliacao';
-import { WipeTransition } from './components/WipeTransition';
 import { BudgetItem, LedgerEntry } from './types';
 import { UserManagement } from './components/UserManagement';
 
@@ -40,7 +39,6 @@ export function App() {
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
-  const [isWiping, setIsWiping] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [canAccessRelatorio, setCanAccessRelatorio] = useState(false);
   const [canAccessEntry, setCanAccessEntry] = useState(false);
@@ -170,15 +168,9 @@ export function App() {
   };
 
   // Volta para a seleção de dimensão sem deslogar do Firebase Auth.
-  // A troca de tela acontece no meio da transição "wipe", quando o
-  // painel já cobre toda a viewport, escondendo o corte de conteúdo.
   const handleGoHome = () => {
-    setIsWiping(true);
-    setTimeout(() => {
-      setDimension(null);
-      try { sessionStorage.removeItem('ptDimension'); } catch {}
-    }, 280);
-    setTimeout(() => setIsWiping(false), 600);
+    setDimension(null);
+    try { sessionStorage.removeItem('ptDimension'); } catch {}
   };
 
   const showToast = (message: string) => {
@@ -358,10 +350,6 @@ export function App() {
     }
   }, [isAuthReady, canAccessEntry, canAccessReport, isAdmin]);
 
-  // Todo o conteúdo é calculado aqui e renderizado junto com o overlay
-  // de transição (WipeTransition) no return final, para que o "wipe"
-  // apareça em cima de qualquer tela (login, seleção ou dimensão).
-  const content = (() => {
   if (!isAuthReady) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#007770]">
       Iniciando...
@@ -536,14 +524,6 @@ export function App() {
       )}
       <Toast message={toast.message} isVisible={toast.isVisible} />
     </div>
-  );
-  })();
-
-  return (
-    <>
-      {content}
-      <WipeTransition active={isWiping} />
-    </>
   );
 }
 
