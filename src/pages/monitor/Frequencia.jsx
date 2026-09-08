@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
 import { enriquecerDados, calcularAgregados, formatarPeriodo } from '../../services/csvService'
-import { baseFinanceira } from '../../services/classificacaoService'
+import { baseFinanceira, baseGerencial } from '../../services/classificacaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
@@ -109,8 +109,17 @@ export default function Frequencia() {
 
   const VAGAS_TOTAL = 5000
 
-  // 1. Preenchimento de vagas
-  const ind_vagas = (agregados.total_aprendizes / VAGAS_TOTAL) * 100
+  // Posição final da competência (jovemAtivo) — usada nos indicadores que
+  // medem ocupação de vaga NO MOMENTO, não participação total no mês.
+  // Ex.: se um jovem é desligado, a vaga só volta a contar como preenchida
+  // quando outro é admitido no lugar dele — isso mede eficiência de
+  // reposição, e por isso não pode usar a base financeira (que conta quem
+  // saiu como se a vaga ainda estivesse ocupada).
+  const jovensAtivos = baseGerencial(dadosEnriquecidos).length
+
+  // 1. Preenchimento de vagas — quantas das 5.000 vagas estão ocupadas
+  // agora (posição final), não quantos passaram pelo programa no mês.
+  const ind_vagas = (jovensAtivos / VAGAS_TOTAL) * 100
 
   // 2. Participação regular (frequência) — soma sobre a base financeira,
   // para incluir os dias trabalhados por quem foi desligado no meio do mês.
@@ -119,10 +128,11 @@ export default function Frequencia() {
   const soma_freq_base = dadosFinanceiros.reduce((s, r) => s + r._kpis.freq_base, 0)
   const ind_freq = soma_freq_base > 0 ? (soma_freq_util / soma_freq_base) * 100 : 0
 
-  // 3. Evasão antecipada
+  // 3. Evasão antecipada — também sobre a posição final (jovensAtivos),
+  // consistente com Preenchimento de Vagas.
   const total_evasoes = agregados.total_evasoes || 0
-  const ind_evasao = agregados.total_aprendizes > 0
-    ? (total_evasoes / agregados.total_aprendizes) * 100
+  const ind_evasao = jovensAtivos > 0
+    ? (total_evasoes / jovensAtivos) * 100
     : 0
 
   // 4. Reposição de vagas
@@ -184,10 +194,13 @@ export default function Frequencia() {
         />
       </div>
 
-      <NotaMetodologica titulo="Por que este número pode ser maior que o de Apuração Mensal?">
-        <strong>Jovens Apurados na Competência</strong> inclui todos que tiveram vínculo em qualquer dia do
-        mês — mesmo quem foi desligado antes do fim dele. Para a posição final da competência (sem quem saiu
-        no meio do mês), veja <strong>Jovens Ativos</strong>, em Apuração Mensal → Gerencial.
+      <NotaMetodologica titulo="Esta tela usa duas bases diferentes, de propósito">
+        <strong>Jovens Apurados na Competência</strong> (acima) conta todo mundo com vínculo em qualquer dia
+        do mês, mesmo quem foi desligado antes do fim dele. Já <strong>Preenchimento de Vagas</strong> e
+        <strong> Taxa de Evasão Antecipada</strong> (abaixo) usam <strong>Jovens Ativos</strong> — a posição
+        final da competência — porque medem ocupação de vaga no momento: se alguém é desligado, a vaga só
+        volta a contar como preenchida quando outro jovem é admitido no lugar. Mesmo valor de Jovens Ativos
+        exibido em Apuração Mensal → Gerencial.
       </NotaMetodologica>
 
       {/* Indicadores com barra de progresso */}
@@ -200,7 +213,7 @@ export default function Frequencia() {
           icon={<SvgIcon path={ICONS.vagas} />}
           label="Preenchimento de Vagas"
           value={ind_vagas}
-          sub={`${agregados.total_aprendizes} aprendizes de ${VAGAS_TOTAL.toLocaleString('pt-BR')} vagas`}
+          sub={`${jovensAtivos} vagas ocupadas de ${VAGAS_TOTAL.toLocaleString('pt-BR')}`}
           meta="Meta: 100% das vagas preenchidas"
           color="blue"
         />
@@ -216,7 +229,7 @@ export default function Frequencia() {
           icon={<SvgIcon path={ICONS.evasao} />}
           label="Taxa de Evasão Antecipada"
           value={ind_evasao}
-          sub={`${total_evasoes} evasões de ${agregados.total_aprendizes} participantes`}
+          sub={`${total_evasoes} evasões de ${jovensAtivos} vagas ativas`}
           meta="Meta: ≤ 15% de evasão"
           color={corEvasao}
         />
