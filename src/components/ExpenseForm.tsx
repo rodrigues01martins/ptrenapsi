@@ -65,10 +65,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
         <div className="bg-[#007770]/10 p-2.5 rounded-xl text-[#007770]">
           <FilePlus2 size={42} />
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">Novo Lançamento</h2>
-          <p className="text-sm text-slate-500">Insira os dados das despesas realizadas</p>
-        </div>
+        <p className="text-sm text-slate-500">Insira os dados das despesas realizadas</p>
       </div>
 
       {budgetItems.length === 0 && (

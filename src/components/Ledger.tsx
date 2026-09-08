@@ -68,7 +68,7 @@ export function Ledger({
       {/* ── Cabeçalho ── */}
       <div className="px-6 pt-5 pb-4 border-b border-slate-100 bg-slate-50/30">
         <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">
-          Registro das Despesas
+          Acompanhar Despesa
         </h3>
 
         {/* ── Barra única de filtros ── */}

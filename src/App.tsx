@@ -18,7 +18,7 @@ import { MonitoramentoAvaliacao } from './components/MonitoramentoAvaliacao';
 import { BudgetItem, LedgerEntry } from './types';
 import { UserManagement } from './components/UserManagement';
 
-type FinanceiroTab = 'entry' | 'report' | 'itens' | 'gestao';
+type FinanceiroTab = 'entry' | 'despesas' | 'report' | 'itens' | 'gestao';
 
 function getStoredDimension(): Dimension | null {
   try {
@@ -429,7 +429,15 @@ export function App() {
               onClick={() => setActiveTab('entry')}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
             >
-              Incluir Registros
+              Novo Lançamento
+            </button>
+          )}
+          {(isAdmin || canAccessReport) && (
+            <button
+              onClick={() => setActiveTab('despesas')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'despesas' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+            >
+              Acompanhar Despesa
             </button>
           )}
           {(isAdmin || canAccessReport) && (
@@ -437,17 +445,31 @@ export function App() {
               onClick={() => setActiveTab('report')}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
             >
-              Ambiente do Relatório
+              Painel
             </button>
           )}
         </div>
 
-        {/* ── Aba: Incluir Registros ── */}
+        {/* ── Aba: Novo Lançamento ── */}
         {activeTab === 'entry' && (isAdmin || canAccessEntry) && (
           <ExpenseForm budgetItems={budgetItems} onAdd={handleAddEntry} showToast={showToast} />
         )}
 
-        {/* ── Aba: Ambiente do Relatório ── */}
+        {/* ── Aba: Acompanhar Despesa ── */}
+        {activeTab === 'despesas' && (isAdmin || canAccessReport) && (
+          <Ledger
+            entries={ledgerEntries}
+            budgetItems={budgetItems}
+            onEdit={(entry) => setEditingEntry(entry)}
+            onDelete={handleDeleteEntry}
+            onStatusChange={handleStatusChange}
+            onUpdateComment={handleUpdateAuditComment}
+            canDelete={isAdmin}
+            isAdmin={isAdmin}
+          />
+        )}
+
+        {/* ── Aba: Painel ── */}
         {activeTab === 'report' && (isAdmin || canAccessReport) && (
           <div className="space-y-10">
             <SummaryCards
@@ -467,16 +489,6 @@ export function App() {
                 stageData={chartData.stage}
               />
             </div>
-            <Ledger
-              entries={ledgerEntries}
-              budgetItems={budgetItems}
-              onEdit={(entry) => setEditingEntry(entry)}
-              onDelete={handleDeleteEntry}
-              onStatusChange={handleStatusChange}
-              onUpdateComment={handleUpdateAuditComment}
-              canDelete={isAdmin}
-              isAdmin={isAdmin}
-            />
             <div className="w-full">
               <BudgetStatus entries={ledgerEntries} budgetItems={budgetItems} />
             </div>

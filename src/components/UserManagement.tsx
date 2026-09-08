@@ -26,8 +26,8 @@ const PERMISSION_FIELDS: PermissionField[] = [
   { key: 'canAccessEixo3',      label: 'Eixo 3',             group: 'Monitoramento e Avaliação' },
   { key: 'canAccessEixo4',      label: 'Eixo 4',             group: 'Monitoramento e Avaliação' },
   { key: 'canAccessRelatorio',  label: 'Relatório Final',    group: 'Monitoramento e Avaliação' },
-  { key: 'canAccessEntry',      label: 'Incluir Registros',      group: 'Acompanhamento Financeiro' },
-  { key: 'canAccessReport',     label: 'Ambiente do Relatório',  group: 'Acompanhamento Financeiro' },
+  { key: 'canAccessEntry',      label: 'Novo Lançamento',        group: 'Acompanhamento Financeiro' },
+  { key: 'canAccessReport',     label: 'Painel',                 group: 'Acompanhamento Financeiro' },
 ];
 
 // Colunas consecutivas do mesmo grupo, para desenhar o cabeçalho em duas linhas.
