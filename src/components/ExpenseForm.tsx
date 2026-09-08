@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FilePlus2, Calendar, Tag, Truck, FileText, FileUp, DollarSign, AlignLeft } from 'lucide-react';
+import { Calendar, Tag, Truck, FileText, FileUp, DollarSign, AlignLeft } from 'lucide-react';
 import { BudgetItem } from '../types';
 
 interface ExpenseFormProps {
@@ -59,14 +59,6 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
   return (
     /* ── Sem max-w próprio: acompanha o container do App (max-w-7xl) ── */
     <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-
-      {/* Cabeçalho */}
-      <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
-        <div className="bg-[#007770]/10 p-2.5 rounded-xl text-[#007770]">
-          <FilePlus2 size={42} />
-        </div>
-        <p className="text-sm text-slate-500">Insira os dados das despesas realizadas</p>
-      </div>
 
       {budgetItems.length === 0 && (
         <div className="mb-6 p-4 rounded-xl bg-[#FCD951]/20 border border-[#FCD951]/40 text-sm text-[#7a5c00]">
