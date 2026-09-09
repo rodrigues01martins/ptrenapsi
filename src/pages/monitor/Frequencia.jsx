@@ -3,6 +3,7 @@ import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreServ
 import { enriquecerDados, calcularAgregados, formatarPeriodo } from '../../services/csvService'
 import { baseFinanceira, baseGerencial } from '../../services/classificacaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
+import ChartCard from '../../components/monitor/ui/ChartCard'
 import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
 import NotaMetodologica from '../../components/monitor/ui/NotaMetodologica'
@@ -135,6 +136,17 @@ export default function Frequencia() {
     ? (total_evasoes / jovensAtivos) * 100
     : 0
 
+  // Ranking de faltas — sobre a base financeira, mesma base de
+  // Participação Regular (quem foi desligado no meio do mês ainda entra).
+  const top10Faltas = [...dadosFinanceiros]
+    .sort((a, b) => b._kpis.total_faltas - a._kpis.total_faltas)
+    .slice(0, 10)
+    .map(r => ({
+      nome: r.nome ? r.nome.split(' ').slice(0, 2).join(' ') : '—',
+      cidade: r.cidade || '—',
+      faltas: r._kpis.total_faltas
+    }))
+
   // 4. Reposição de vagas
   const ind_reposicao = agregados.contratos_finalizados > 0
     ? (agregados.contratos_iniciados / agregados.contratos_finalizados) * 100
@@ -242,6 +254,40 @@ export default function Frequencia() {
           color={corReposicao}
         />
       </div>
+
+      <ChartCard title="10 Aprendizes com Mais Faltas no Mês" badge="Alertas" badgeColor="danger">
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontFamily: 'var(--font-family)' }}>
+            <thead>
+              <tr>
+                {['#', 'Nome', 'Cidade', 'Total de Faltas'].map(h => (
+                  <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {top10Faltas.map((r, i) => (
+                <tr key={i}
+                  style={{ borderBottom: '1px solid var(--border-default)' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-subtle)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600 }}>{i + 1}</td>
+                  <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{r.nome}</td>
+                  <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{r.cidade}</td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', height: '24px', padding: '0 12px', borderRadius: '999px', background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger-border)', color: 'var(--status-danger-text)', fontSize: '12px', fontWeight: 600 }}>
+                      {r.faltas} dias
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ChartCard>
     </div>
   )
 }

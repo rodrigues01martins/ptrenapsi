@@ -1,25 +1,13 @@
 import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
-import { enriquecerDados, calcularAgregados, formatarPeriodo } from '../../services/csvService'
+import { enriquecerDados, calcularAgregados, formatarPeriodo, parseMoeda } from '../../services/csvService'
 import { baseGerencial, baseFinanceira } from '../../services/classificacaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
-import ChartCard from '../../components/monitor/ui/ChartCard'
 import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
 import NotaMetodologica from '../../components/monitor/ui/NotaMetodologica'
+import MapaMunicipios from '../../components/monitor/ui/MapaMunicipios'
 import { Select } from '../../components/monitor/ui/Input'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-
-const tooltipStyle = {
-  contentStyle: {
-    background: 'var(--bg-surface)',
-    border: '1px solid var(--border-default)',
-    borderRadius: '8px',
-    fontSize: '13px',
-    color: 'var(--text-primary)',
-    fontFamily: 'var(--font-family)',
-  }
-}
 
 const SvgIcon = ({ path, size = 28 }) => (
   <svg width={size} height={size} viewBox="0 -960 960 960" fill="var(--brand-primary)">
@@ -73,23 +61,16 @@ export default function Gerencial() {
     return new Date(ano, mes, 0).toLocaleDateString('pt-BR')
   })()
 
-  const munMap = {}
-  dadosEnriquecidos.forEach(r => {
-    const m = r.cidade || 'N/I'
-    munMap[m] = (munMap[m] || 0) + 1
+  // Vale Transporte é um item de custo (oc_vt), igual aos demais que
+  // compõem val_apu_inc — segue a regra de ouro e usa a base financeira,
+  // não a gerencial: quem recebeu VT e foi desligado no meio do mês
+  // continua contando aqui.
+  const dadosComVT = baseFinanceira(dadosEnriquecidos).filter(r => parseMoeda(r.oc_vt) > 0)
+  const contagemVTPorCidade = {}
+  dadosComVT.forEach(r => {
+    const cidade = (r.cidade || '').toUpperCase().trim()
+    if (cidade) contagemVTPorCidade[cidade] = (contagemVTPorCidade[cidade] || 0) + 1
   })
-  const munOrdenado = Object.entries(munMap).sort((a, b) => b[1] - a[1])
-  const top10Maior  = munOrdenado.slice(0, 10).map(([name, total]) => ({ name, total }))
-  const top10Menor  = [...munOrdenado].sort((a, b) => a[1] - b[1]).slice(0, 10).map(([name, total]) => ({ name, total }))
-
-  const top10Faltas = [...dadosEnriquecidos]
-    .sort((a, b) => b._kpis.total_faltas - a._kpis.total_faltas)
-    .slice(0, 10)
-    .map(r => ({
-      nome: r.nome ? r.nome.split(' ').slice(0, 2).join(' ') : '—',
-      cidade: r.cidade || '—',
-      faltas: r._kpis.total_faltas
-    }))
 
   return (
     <div>
@@ -133,63 +114,22 @@ export default function Gerencial() {
         <KpiCard icon={<SvgIcon path={ICONS.cake} />} label="Jovens que Atingiram 18 anos no Mês" value={agregados.total_aniversario_mes} sub="completaram 18 anos no período" color="warn" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-        <ChartCard title="10 Municípios com Mais Aprendizes" badge="Top 10" badgeColor="green">
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={top10Maior} layout="vertical">
-              <XAxis type="number" stroke="var(--chart-axis)" tick={{ fontSize: 11, fontFamily: 'var(--font-family)' }} />
-              <YAxis type="category" dataKey="name" stroke="var(--chart-axis)" tick={{ fontSize: 10, fontFamily: 'var(--font-family)' }} width={120} />
-              <Tooltip {...tooltipStyle} />
-              <Bar dataKey="total" name="Aprendizes" fill="var(--chart-1)" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="10 Municípios com Menos Aprendizes" badge="Bottom 10" badgeColor="warn">
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={top10Menor} layout="vertical">
-              <XAxis type="number" stroke="var(--chart-axis)" tick={{ fontSize: 11, fontFamily: 'var(--font-family)' }} />
-              <YAxis type="category" dataKey="name" stroke="var(--chart-axis)" tick={{ fontSize: 10, fontFamily: 'var(--font-family)' }} width={120} />
-              <Tooltip {...tooltipStyle} />
-              <Bar dataKey="total" name="Aprendizes" fill="var(--chart-2)" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
-
-      <ChartCard title="10 Aprendizes com Mais Faltas no Mês" badge="Alertas" badgeColor="danger">
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontFamily: 'var(--font-family)' }}>
-            <thead>
-              <tr>
-                {['#', 'Nome', 'Cidade', 'Total de Faltas'].map(h => (
-                  <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {top10Faltas.map((r, i) => (
-                <tr key={i}
-                  style={{ borderBottom: '1px solid var(--border-default)' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-subtle)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontWeight: 600 }}>{i + 1}</td>
-                  <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{r.nome}</td>
-                  <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{r.cidade}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', height: '24px', padding: '0 12px', borderRadius: '999px', background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger-border)', color: 'var(--status-danger-text)', fontSize: '12px', fontWeight: 600 }}>
-                      {r.faltas} dias
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '24px' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-default)', background: 'var(--bg-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family)' }}>
+            Jovens com Vale Transporte por Município
+          </h3>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-family)' }}>
+            Círculo proporcional à quantidade de jovens com VT · clique para detalhes
+          </span>
         </div>
-      </ChartCard>
+        <MapaMunicipios
+          contagensPorCidade={contagemVTPorCidade}
+          rotulo="jovens com VT"
+          totalBase={dadosComVT.length}
+          key={periodoSel}
+        />
+      </div>
     </div>
   )
 }
