@@ -194,7 +194,7 @@ export default function Frequencia() {
         />
       </div>
 
-      <NotaMetodologica titulo="Esta tela usa duas bases diferentes, de propósito">
+      <NotaMetodologica>
         <strong>Jovens Apurados na Competência</strong> (acima) conta todo mundo com vínculo em qualquer dia
         do mês, mesmo quem foi desligado antes do fim dele. Já <strong>Preenchimento de Vagas</strong> e
         <strong> Taxa de Evasão Antecipada</strong> (abaixo) usam <strong>Jovens Ativos</strong> — a posição
