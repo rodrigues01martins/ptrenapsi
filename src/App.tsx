@@ -423,32 +423,37 @@ export function App() {
       <div className="max-w-7xl mx-auto">
 
         {/* ── Tabs ── */}
-        <div className="mb-8 flex gap-3 flex-wrap">
-          {(isAdmin || canAccessEntry) && (
-            <button
-              onClick={() => setActiveTab('entry')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-            >
-              Novo Lançamento
-            </button>
-          )}
-          {(isAdmin || canAccessReport) && (
-            <button
-              onClick={() => setActiveTab('despesas')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'despesas' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-            >
-              Acompanhar Despesa
-            </button>
-          )}
-          {(isAdmin || canAccessReport) && (
-            <button
-              onClick={() => setActiveTab('report')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-            >
-              Painel
-            </button>
-          )}
-        </div>
+        {/* Escondida em Cadastrar Itens/Usuários: são páginas de gestão do
+            app, sem lugar no fluxo de navegação normal — acesso só pelo
+            Header, restrito a admins. */}
+        {activeTab !== 'itens' && activeTab !== 'gestao' && (
+          <div className="mb-8 flex gap-3 flex-wrap">
+            {(isAdmin || canAccessEntry) && (
+              <button
+                onClick={() => setActiveTab('entry')}
+                className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+              >
+                Novo Lançamento
+              </button>
+            )}
+            {(isAdmin || canAccessReport) && (
+              <button
+                onClick={() => setActiveTab('despesas')}
+                className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'despesas' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+              >
+                Acompanhar Despesa
+              </button>
+            )}
+            {(isAdmin || canAccessReport) && (
+              <button
+                onClick={() => setActiveTab('report')}
+                className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+              >
+                Painel
+              </button>
+            )}
+          </div>
+        )}
 
         {/* ── Aba: Novo Lançamento ── */}
         {activeTab === 'entry' && (isAdmin || canAccessEntry) && (

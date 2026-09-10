@@ -60,17 +60,21 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
 
       <div className="p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8 flex gap-3 flex-wrap">
-            {visibleTabs.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setActiveTab(t.key)}
-                className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === t.key ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {/* Escondida em Usuários: é página de gestão do app, sem lugar
+              no fluxo de navegação normal — acesso só pelo Header. */}
+          {activeTab !== 'gestao' && (
+            <div className="mb-8 flex gap-3 flex-wrap">
+              {visibleTabs.map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setActiveTab(t.key)}
+                  className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === t.key ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {!activeTab && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
