@@ -79,5 +79,13 @@ service cloud.firestore {
       allow create, update, delete: if collectionId.matches('colaboradores_.*') &&
         (isAdmin() || hasPermission('canAccessUpload'));
     }
+
+    // ── Monitor de Aprendizes — dimensão "Monitoramento e Avaliação" ───
+    // Visitas de fiscalização in loco (Formulário + Painel Visita In Loco).
+    match /visitas_inloco/{visitaId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() || hasPermission('canAccessEixo3');
+      allow update, delete: if isAdmin();
+    }
   }
 }

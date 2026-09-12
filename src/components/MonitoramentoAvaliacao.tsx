@@ -4,8 +4,8 @@ import { UserManagement } from './UserManagement';
 import RelatorioFinal from './RelatorioFinal';
 import Frequencia from '../pages/monitor/Frequencia';
 import Alcance from '../pages/monitor/Alcance';
-import Eixo3 from '../pages/monitor/Eixo3';
-import Eixo4 from '../pages/monitor/Eixo4';
+import VisitaInLocoForm from '../pages/monitor/VisitaInLocoForm';
+import VisitaInLocoDashboard from '../pages/monitor/VisitaInLocoDashboard';
 
 type MetasTab = 'relatorio' | 'frequencia' | 'alcance' | 'eixo3' | 'eixo4' | 'gestao';
 
@@ -23,11 +23,11 @@ interface MonitoramentoAvaliacaoProps {
 }
 
 const TABS: { key: MetasTab; label: string; can: (p: MonitoramentoAvaliacaoProps) => boolean }[] = [
-  { key: 'frequencia', label: 'Eixo 1 — Inclusão', can: p => p.isAdmin || p.canAccessFrequencia },
-  { key: 'alcance',    label: 'Eixo 2 — Alcance',  can: p => p.isAdmin || p.canAccessAlcance },
-  { key: 'eixo3',      label: 'Eixo 3',            can: p => p.isAdmin || p.canAccessEixo3 },
-  { key: 'eixo4',      label: 'Eixo 4',            can: p => p.isAdmin || p.canAccessEixo4 },
-  { key: 'relatorio',  label: 'Relatório Final',   can: p => p.isAdmin || p.canAccessRelatorio },
+  { key: 'frequencia', label: 'Eixo 1 — Inclusão',            can: p => p.isAdmin || p.canAccessFrequencia },
+  { key: 'alcance',    label: 'Eixo 2 — Alcance',             can: p => p.isAdmin || p.canAccessAlcance },
+  { key: 'eixo3',      label: 'Formulário de Visita In Loco', can: p => p.isAdmin || p.canAccessEixo3 },
+  { key: 'eixo4',      label: 'Painel Visita in Loco',        can: p => p.isAdmin || p.canAccessEixo4 },
+  { key: 'relatorio',  label: 'Relatório Final',              can: p => p.isAdmin || p.canAccessRelatorio },
 ];
 
 export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (props) => {
@@ -88,8 +88,8 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
 
           {activeTab === 'frequencia' && <Frequencia />}
           {activeTab === 'alcance' && <Alcance />}
-          {activeTab === 'eixo3' && <Eixo3 />}
-          {activeTab === 'eixo4' && <Eixo4 />}
+          {activeTab === 'eixo3' && <VisitaInLocoForm showToast={showToast} />}
+          {activeTab === 'eixo4' && <VisitaInLocoDashboard />}
           {activeTab === 'relatorio' && <RelatorioFinal isAdmin={isAdmin} showToast={showToast} />}
           {activeTab === 'gestao' && isAdmin && <UserManagement currentUserUid={currentUserUid} />}
         </div>
