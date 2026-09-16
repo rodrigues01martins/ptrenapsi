@@ -87,5 +87,22 @@ service cloud.firestore {
       allow create: if isAdmin() || hasPermission('canAccessEixo3');
       allow update, delete: if isAdmin();
     }
+
+    // Verificação Inicial do Aprendiz — 30 Dias. Uma coleção por período de
+    // aplicação (verificacao30dias_aaaa_mm), mesmo motivo do curinga usado
+    // acima para colaboradores_*.
+    match /{collectionId}/{respostaId} {
+      allow read: if collectionId.matches('verificacao30dias_[0-9]+_[0-9]+') && isAuthenticated();
+      allow create: if collectionId.matches('verificacao30dias_[0-9]+_[0-9]+') &&
+        (isAdmin() || hasPermission('canAccessFormulario30Dias'));
+      allow update, delete: if collectionId.matches('verificacao30dias_[0-9]+_[0-9]+') && isAdmin();
+    }
+
+    // Metadados de quais períodos têm formulários — um doc por período.
+    match /verificacao30dias_periodos/{periodoId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() || hasPermission('canAccessFormulario30Dias');
+      allow delete: if isAdmin();
+    }
   }
 }

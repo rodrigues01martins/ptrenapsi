@@ -6,8 +6,10 @@ import Frequencia from '../pages/monitor/Frequencia';
 import Alcance from '../pages/monitor/Alcance';
 import VisitaInLocoForm from '../pages/monitor/VisitaInLocoForm';
 import VisitaInLocoDashboard from '../pages/monitor/VisitaInLocoDashboard';
+import Formulario30DiasForm from '../pages/monitor/Formulario30DiasForm';
+import Painel30Dias from '../pages/monitor/Painel30Dias';
 
-type MetasTab = 'relatorio' | 'frequencia' | 'alcance' | 'eixo3' | 'eixo4' | 'gestao';
+type MetasTab = 'relatorio' | 'frequencia' | 'alcance' | 'eixo3' | 'eixo4' | 'formulario30dias' | 'painel30dias' | 'gestao';
 
 interface MonitoramentoAvaliacaoProps {
   isAdmin: boolean;
@@ -16,6 +18,8 @@ interface MonitoramentoAvaliacaoProps {
   canAccessAlcance: boolean;
   canAccessEixo3: boolean;
   canAccessEixo4: boolean;
+  canAccessFormulario30Dias: boolean;
+  canAccessPainel30Dias: boolean;
   currentUserUid: string;
   onGoHome: () => void;
   onSignOut: () => void;
@@ -23,11 +27,13 @@ interface MonitoramentoAvaliacaoProps {
 }
 
 const TABS: { key: MetasTab; label: string; can: (p: MonitoramentoAvaliacaoProps) => boolean }[] = [
-  { key: 'frequencia', label: 'Eixo 1 — Inclusão',            can: p => p.isAdmin || p.canAccessFrequencia },
-  { key: 'alcance',    label: 'Eixo 2 — Alcance',             can: p => p.isAdmin || p.canAccessAlcance },
-  { key: 'eixo3',      label: 'Formulário de Visita In Loco', can: p => p.isAdmin || p.canAccessEixo3 },
-  { key: 'eixo4',      label: 'Painel Visita in Loco',        can: p => p.isAdmin || p.canAccessEixo4 },
-  { key: 'relatorio',  label: 'Relatório Final',              can: p => p.isAdmin || p.canAccessRelatorio },
+  { key: 'frequencia',        label: 'Eixo 1 — Inclusão',                              can: p => p.isAdmin || p.canAccessFrequencia },
+  { key: 'alcance',           label: 'Eixo 2 — Alcance',                               can: p => p.isAdmin || p.canAccessAlcance },
+  { key: 'eixo3',             label: 'Formulário de Visita In Loco',                   can: p => p.isAdmin || p.canAccessEixo3 },
+  { key: 'eixo4',             label: 'Painel Visita in Loco',                          can: p => p.isAdmin || p.canAccessEixo4 },
+  { key: 'formulario30dias',  label: 'Formulário de Verificação Inicial – 30 Dias',    can: p => p.isAdmin || p.canAccessFormulario30Dias },
+  { key: 'painel30dias',      label: 'Painel – Verificação Inicial – 30 Dias',         can: p => p.isAdmin || p.canAccessPainel30Dias },
+  { key: 'relatorio',         label: 'Relatório Final',                                can: p => p.isAdmin || p.canAccessRelatorio },
 ];
 
 export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (props) => {
@@ -43,7 +49,7 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
     const first = TABS.find(t => t.can(props));
     if (first) setActiveTab(first.key);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.isAdmin, props.canAccessRelatorio, props.canAccessFrequencia, props.canAccessAlcance, props.canAccessEixo3, props.canAccessEixo4]);
+  }, [props.isAdmin, props.canAccessRelatorio, props.canAccessFrequencia, props.canAccessAlcance, props.canAccessEixo3, props.canAccessEixo4, props.canAccessFormulario30Dias, props.canAccessPainel30Dias]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
@@ -90,6 +96,8 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
           {activeTab === 'alcance' && <Alcance />}
           {activeTab === 'eixo3' && <VisitaInLocoForm showToast={showToast} />}
           {activeTab === 'eixo4' && <VisitaInLocoDashboard />}
+          {activeTab === 'formulario30dias' && <Formulario30DiasForm showToast={showToast} />}
+          {activeTab === 'painel30dias' && <Painel30Dias />}
           {activeTab === 'relatorio' && <RelatorioFinal isAdmin={isAdmin} showToast={showToast} />}
           {activeTab === 'gestao' && isAdmin && <UserManagement currentUserUid={currentUserUid} />}
         </div>

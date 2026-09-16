@@ -6,6 +6,7 @@ import { Users, Shield, ShieldOff, RefreshCw, Search } from 'lucide-react';
 type PermissionKey =
   | 'canAccessUpload' | 'canAccessGerencial' | 'canAccessRepasse' | 'canAccessHistorico'
   | 'canAccessFrequencia' | 'canAccessAlcance' | 'canAccessEixo3' | 'canAccessEixo4'
+  | 'canAccessFormulario30Dias' | 'canAccessPainel30Dias'
   | 'canAccessRelatorio'
   | 'canAccessEntry' | 'canAccessReport';
 
@@ -25,6 +26,8 @@ const PERMISSION_FIELDS: PermissionField[] = [
   { key: 'canAccessAlcance',    label: 'Eixo 2 — Alcance',   group: 'Monitoramento e Avaliação' },
   { key: 'canAccessEixo3',      label: 'Formulário Visita In Loco', group: 'Monitoramento e Avaliação' },
   { key: 'canAccessEixo4',      label: 'Painel Visita In Loco',     group: 'Monitoramento e Avaliação' },
+  { key: 'canAccessFormulario30Dias', label: 'Formulário Verificação 30 Dias', group: 'Monitoramento e Avaliação' },
+  { key: 'canAccessPainel30Dias',     label: 'Painel Verificação 30 Dias',     group: 'Monitoramento e Avaliação' },
   { key: 'canAccessRelatorio',  label: 'Relatório Final',    group: 'Monitoramento e Avaliação' },
   { key: 'canAccessEntry',      label: 'Novo Lançamento',        group: 'Acompanhamento Financeiro' },
   { key: 'canAccessReport',     label: 'Painel',                 group: 'Acompanhamento Financeiro' },

@@ -53,6 +53,8 @@ export function App() {
   const [canAccessAlcance, setCanAccessAlcance] = useState(false);
   const [canAccessEixo3, setCanAccessEixo3] = useState(false);
   const [canAccessEixo4, setCanAccessEixo4] = useState(false);
+  const [canAccessFormulario30Dias, setCanAccessFormulario30Dias] = useState(false);
+  const [canAccessPainel30Dias, setCanAccessPainel30Dias] = useState(false);
 
   // Lê papel/permissões do Firestore para o usuário logado
   useEffect(() => {
@@ -69,6 +71,8 @@ export function App() {
       setCanAccessAlcance(false);
       setCanAccessEixo3(false);
       setCanAccessEixo4(false);
+      setCanAccessFormulario30Dias(false);
+      setCanAccessPainel30Dias(false);
       return;
     }
     const bootstrapAdmin = user.email === BOOTSTRAP_ADMIN_EMAIL;
@@ -88,6 +92,8 @@ export function App() {
       setCanAccessAlcance(admin || data?.canAccessAlcance === true);
       setCanAccessEixo3(admin || data?.canAccessEixo3 === true);
       setCanAccessEixo4(admin || data?.canAccessEixo4 === true);
+      setCanAccessFormulario30Dias(admin || data?.canAccessFormulario30Dias === true);
+      setCanAccessPainel30Dias(admin || data?.canAccessPainel30Dias === true);
     }).catch(() => {
       setIsAdmin(bootstrapAdmin);
       setCanAccessRelatorio(bootstrapAdmin);
@@ -101,6 +107,8 @@ export function App() {
       setCanAccessAlcance(bootstrapAdmin);
       setCanAccessEixo3(bootstrapAdmin);
       setCanAccessEixo4(bootstrapAdmin);
+      setCanAccessFormulario30Dias(bootstrapAdmin);
+      setCanAccessPainel30Dias(bootstrapAdmin);
     });
   }, [user]);
 
@@ -129,6 +137,8 @@ export function App() {
             canAccessAlcance: false,
             canAccessEixo3: false,
             canAccessEixo4: false,
+            canAccessFormulario30Dias: false,
+            canAccessPainel30Dias: false,
             createdAt: new Date().toISOString(),
           });
         }
@@ -395,6 +405,8 @@ export function App() {
           canAccessAlcance={canAccessAlcance}
           canAccessEixo3={canAccessEixo3}
           canAccessEixo4={canAccessEixo4}
+          canAccessFormulario30Dias={canAccessFormulario30Dias}
+          canAccessPainel30Dias={canAccessPainel30Dias}
           currentUserUid={user?.uid || ''}
           onGoHome={handleGoHome}
           onSignOut={handleSignOut}
