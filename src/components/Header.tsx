@@ -1,5 +1,6 @@
 import React from 'react';
 import { Home } from 'lucide-react';
+import { Button } from './ui/Button';
 
 interface HeaderProps {
   isAdmin: boolean;
@@ -57,12 +58,9 @@ export const Header: React.FC<HeaderProps> = ({ isAdmin, showItensButton, showEx
               Exportar registros
             </button>
           )}
-          <button
-            onClick={onSignOut}
-            className="bg-[#007770] text-white text-sm font-bold px-6 py-2.5 rounded-lg hover:bg-[#005f59] transition-colors whitespace-nowrap"
-          >
+          <Button onClick={onSignOut} className="rounded-lg">
             Sair
-          </button>
+          </Button>
         </nav>
       </div>
     </header>

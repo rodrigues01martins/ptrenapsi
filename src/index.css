@@ -82,6 +82,37 @@ body {
   --text-dim:    var(--text-secondary);
 }
 
+/* ============================================================
+   DESIGN TOKENS — lado "nativo" (Acompanhamento Financeiro,
+   Administração e shell do app: Header, modais, formulários).
+   Prefixo --native- para não colidir com os tokens acima (mesmo
+   papel semântico, valores hex diferentes dos dois subsistemas).
+   Consolidam os valores hex já predominantes no Tailwind dessas
+   telas — não introduzem cores novas.
+   ============================================================ */
+:root {
+  --native-primary:       #007770;
+  --native-primary-hover: #005F59;
+  --native-primary-light: #F0FAF5;
+  --native-focus:         var(--native-primary);
+
+  --native-canvas:  #F8FAFC;
+  --native-surface: #FFFFFF;
+
+  --native-text-heading: #1E293B;
+  --native-text-body:    #475569;
+  --native-text-muted:   #94A3B8;
+
+  --native-border:        #E2E8F0;
+  --native-border-subtle: #F1F5F9;
+
+  --native-success:      #059669;
+  --native-warning-bg:   #FCD951;
+  --native-warning-text: #7A5C00;
+  --native-danger:       #DC2626;
+  --native-info:         #2563EB;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

@@ -1,6 +1,9 @@
 import React from 'react';
 import { BudgetItem, LedgerEntry } from '../types';
 import { fmt, cn } from '../lib/utils';
+import { EmptyState } from './ui/EmptyState';
+import { Badge } from './ui/Badge';
+import { ClipboardList } from 'lucide-react';
 
 interface BudgetStatusProps {
   entries: LedgerEntry[];
@@ -34,8 +37,8 @@ export const BudgetStatus: React.FC<BudgetStatusProps> = ({ entries, budgetItems
           <tbody className="divide-y divide-slate-100">
             {budgetItems.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-400 text-sm">
-                  Nenhum item do Plano de Trabalho cadastrado.
+                <td colSpan={5}>
+                  <EmptyState title="Nenhum item do Plano de Trabalho cadastrado." icon={<ClipboardList size={32} />} />
                 </td>
               </tr>
             ) : budgetItems.map(item => {
@@ -51,11 +54,7 @@ export const BudgetStatus: React.FC<BudgetStatusProps> = ({ entries, budgetItems
                   <td className="p-4">
                     <div className="font-bold text-slate-800 flex items-center gap-2 flex-wrap">
                       <span>{item.id}</span>
-                      {isCritical && (
-                        <span className="inline-flex px-2 py-0.5 rounded-full bg-[#FCD951]/30 text-[#7a5c00] text-[10px] font-bold">
-                          Crítico
-                        </span>
-                      )}
+                      {isCritical && <Badge variant="warning">Crítico</Badge>}
                     </div>
                     <div className="text-[10px] text-slate-400 font-bold uppercase truncate max-w-[280px]">{item.desc}</div>
                   </td>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { fmt } from '../lib/utils';
+import { KpiCard } from './ui/Card';
 
 interface SummaryCardsProps {
   totalOrcado: number;
@@ -21,24 +22,19 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
   lastAudit
 }) => {
   const cards = [
-    { label: 'Total Previsto', value: fmt.format(totalOrcado), color: 'text-slate-900' },
-    { label: 'Total Executado', value: fmt.format(totalExecutado), color: 'text-[#007770]' },
-    { label: 'Saldo Disponível', value: fmt.format(totalSaldo), color: 'text-emerald-600' },
-    { label: '% Execução', value: `${percentTotal.toFixed(1)}%`, color: 'text-[#7a5c00]' },
-    { label: 'Itens Críticos', value: criticalItems.toString(), color: 'text-red-600' },
-    { label: 'Registros', value: totalRecords.toString(), color: 'text-slate-900' },
-    { label: 'Última Alteração', value: lastAudit, color: 'text-slate-900', isSmall: true },
+    { label: 'Total Previsto', value: fmt.format(totalOrcado), tone: 'neutral' as const },
+    { label: 'Total Executado', value: fmt.format(totalExecutado), tone: 'primary' as const },
+    { label: 'Saldo Disponível', value: fmt.format(totalSaldo), tone: 'success' as const },
+    { label: '% Execução', value: `${percentTotal.toFixed(1)}%`, tone: 'warning' as const },
+    { label: 'Itens Críticos', value: criticalItems.toString(), tone: 'danger' as const },
+    { label: 'Registros', value: totalRecords.toString(), tone: 'neutral' as const },
+    { label: 'Última Alteração', value: <span className="text-sm">{lastAudit}</span>, tone: 'neutral' as const },
   ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-7 gap-4 mb-8">
       {cards.map((card, idx) => (
-        <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:translate-y-[-3px] hover:shadow-md">
-          <p className="text-sm font-semibold text-slate-500 mb-2">{card.label}</p>
-          <h2 className={`${card.isSmall ? 'text-sm' : 'text-xl'} font-bold ${card.color}`}>
-            {card.value}
-          </h2>
-        </div>
+        <KpiCard key={idx} label={card.label} value={card.value} tone={card.tone} />
       ))}
     </div>
   );

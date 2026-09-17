@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { collection, doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Users, Shield, ShieldOff, RefreshCw, Search } from 'lucide-react';
+import { PageHeader } from './ui/PageHeader';
+import { KpiCard } from './ui/Card';
+import { TextInput } from './ui/FormField';
+import { Badge } from './ui/Badge';
 
 type PermissionKey =
   | 'canAccessUpload' | 'canAccessGerencial' | 'canAccessRepasse' | 'canAccessHistorico'
@@ -135,40 +139,31 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
   return (
     <div>
       {/* Cabeçalho */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-[#007770]/10 p-2.5 rounded-xl">
-          <Users size={28} className="text-[#007770]" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">Gestão de Usuários</h2>
-          <p className="text-sm text-slate-500">Gerencie permissões de acesso dos usuários cadastrados</p>
-        </div>
+      <div className="mb-6">
+        <PageHeader
+          icon={<Users size={28} />}
+          title="Gestão de Usuários"
+          description="Gerencie permissões de acesso dos usuários cadastrados"
+        />
       </div>
 
       {/* Cards de resumo */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {[
-          { label: 'Total de usuários', value: users.length, color: 'text-slate-800' },
-          { label: 'Administradores', value: users.filter(u => u.role === 'admin').length, color: 'text-[#007770]' },
-          { label: 'Acesso Relatório Final', value: users.filter(u => u.canAccessRelatorio).length, color: 'text-blue-600' },
-          { label: 'Sem nenhum acesso liberado', value: users.filter(u => u.role !== 'admin' && !hasAnyAccess(u)).length, color: 'text-slate-400' },
-        ].map((c, i) => (
-          <div key={i} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
-            <p className="text-xs text-slate-500 font-semibold mb-1">{c.label}</p>
-            <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
-          </div>
-        ))}
+        <KpiCard compact label="Total de usuários" value={users.length} />
+        <KpiCard compact label="Administradores" value={users.filter(u => u.role === 'admin').length} tone="primary" />
+        <KpiCard compact label="Acesso Relatório Final" value={users.filter(u => u.canAccessRelatorio).length} tone="success" />
+        <KpiCard compact label="Sem nenhum acesso liberado" value={users.filter(u => u.role !== 'admin' && !hasAnyAccess(u)).length} tone="muted" />
       </div>
 
       {/* Busca */}
       <div className="relative mb-4">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+        <TextInput
           type="text"
           placeholder="Buscar por e-mail ou nome..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#007770] outline-none"
+          className="pl-9"
         />
       </div>
 

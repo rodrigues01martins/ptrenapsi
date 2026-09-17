@@ -6,6 +6,8 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebase';
 import { Mail, Key } from 'lucide-react';
+import { TextInput } from './ui/FormField';
+import { Button } from './ui/Button';
 
 interface LoginProps {
   showToast: (message: string) => void;
@@ -57,12 +59,13 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <Mail size={12} /> E-mail Institucional
               </label>
-              <input
+              <TextInput
                 type="email"
                 required
+                variant="filled"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#007770] transition-all"
+                className="p-4"
                 placeholder="email registrado"
               />
             </div>
@@ -71,23 +74,25 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <Key size={12} /> Senha
               </label>
-              <input
+              <TextInput
                 type="password"
                 required
+                variant="filled"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#007770] transition-all"
+                className="p-4"
                 placeholder="••••••••"
               />
             </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className={`w-full bg-[#007770] text-white font-bold py-4 rounded-2xl shadow-lg shadow-[#007770]/20 transition-all hover:bg-[#005f59] ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              loading={loading}
+              size="lg"
+              className="w-full rounded-2xl shadow-[#007770]/20"
             >
               {loading ? 'Entrando...' : 'Entrar'}
-            </button>
+            </Button>
           </form>
         </div>
 

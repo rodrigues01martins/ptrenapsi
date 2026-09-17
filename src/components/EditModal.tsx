@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Upload } from 'lucide-react';
 import { BudgetItem, LedgerEntry } from '../types';
 import { fmt, formatDateForInput, fileToDataUrl } from '../lib/utils';
+import { Button } from './ui/Button';
+import { TextInput, Select, Textarea } from './ui/FormField';
 
 interface EditModalProps {
   isOpen: boolean;
@@ -108,23 +110,19 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
             <form className="p-6 space-y-4 overflow-y-auto max-h-[80vh]" onSubmit={handleSubmit}>
 
               {/* Código do Item */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Código do Item
-                </label>
-                <select
-                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm appearance-none bg-slate-50"
-                  value={itemCode}
-                  onChange={e => setItemCode(e.target.value)}
-                  required
-                >
-                  {budgetItems.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.id} - {item.desc}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Código do Item"
+                variant="filled"
+                value={itemCode}
+                onChange={e => setItemCode(e.target.value)}
+                required
+              >
+                {budgetItems.map(item => (
+                  <option key={item.id} value={item.id}>
+                    {item.id} - {item.desc}
+                  </option>
+                ))}
+              </Select>
 
               {/* Painel informativo — atualiza em tempo real com o itemCode selecionado */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1">
@@ -156,71 +154,47 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
 
               {/* NF / Fornecedor */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    NF / Documento
-                  </label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm"
-                    value={nf}
-                    onChange={e => setNf(e.target.value)}
-                    type="text"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Fornecedor
-                  </label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm"
-                    value={supplier}
-                    onChange={e => setSupplier(e.target.value)}
-                    type="text"
-                  />
-                </div>
-              </div>
-
-              {/* Descrição */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Descrição
-                </label>
-                <input
-                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm"
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  required
+                <TextInput
+                  label="NF / Documento"
+                  value={nf}
+                  onChange={e => setNf(e.target.value)}
+                  type="text"
+                />
+                <TextInput
+                  label="Fornecedor"
+                  value={supplier}
+                  onChange={e => setSupplier(e.target.value)}
                   type="text"
                 />
               </div>
 
+              {/* Descrição */}
+              <TextInput
+                label="Descrição"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                required
+                type="text"
+              />
+
               {/* Valor / Data */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Valor (R$)
-                  </label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm font-bold"
-                    value={amount}
-                    onChange={e => setAmount(e.target.value)}
-                    required
-                    step="0.01"
-                    type="number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Data
-                  </label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm bg-white"
-                    value={date}
-                    onChange={e => setDate(e.target.value)}
-                    required
-                    type="date"
-                  />
-                </div>
+                <TextInput
+                  label="Valor (R$)"
+                  className="font-bold"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  required
+                  step="0.01"
+                  type="number"
+                />
+                <TextInput
+                  label="Data"
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                  required
+                  type="date"
+                />
               </div>
 
               {/* Documento */}
@@ -258,33 +232,22 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
               </div>
 
               {/* Observações de auditoria */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Observações de Auditoria
-                </label>
-                <textarea
-                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#007770] outline-none border text-sm bg-slate-50 min-h-[80px]"
-                  value={auditComment}
-                  onChange={e => setAuditComment(e.target.value)}
-                  placeholder="Instruções para o usuário..."
-                />
-              </div>
+              <Textarea
+                label="Observações de Auditoria"
+                variant="filled"
+                value={auditComment}
+                onChange={e => setAuditComment(e.target.value)}
+                placeholder="Instruções para o usuário..."
+              />
 
               {/* Ações */}
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all"
-                >
+                <Button type="button" variant="secondary" onClick={onClose}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-[#007770] text-white font-bold shadow-lg hover:bg-[#005f59] transition-all"
-                >
+                </Button>
+                <Button type="submit">
                   Salvar Alterações
-                </button>
+                </Button>
               </div>
 
             </form>
