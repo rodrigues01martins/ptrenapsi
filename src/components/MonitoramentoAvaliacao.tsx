@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './Header';
+import { MonitoringNavigation, NavEntry } from './MonitoringNavigation';
 import { UserManagement } from './UserManagement';
 import RelatorioFinal from './RelatorioFinal';
 import Frequencia from '../pages/monitor/Frequencia';
@@ -26,27 +27,66 @@ interface MonitoramentoAvaliacaoProps {
   showToast: (message: string) => void;
 }
 
-const TABS: { key: MetasTab; label: string; can: (p: MonitoramentoAvaliacaoProps) => boolean }[] = [
-  { key: 'frequencia',        label: 'Eixo 1 — Inclusão',                              can: p => p.isAdmin || p.canAccessFrequencia },
-  { key: 'alcance',           label: 'Eixo 2 — Alcance',                               can: p => p.isAdmin || p.canAccessAlcance },
-  { key: 'eixo3',             label: 'Formulário de Visita In Loco',                   can: p => p.isAdmin || p.canAccessEixo3 },
-  { key: 'eixo4',             label: 'Painel Visita in Loco',                          can: p => p.isAdmin || p.canAccessEixo4 },
-  { key: 'formulario30dias',  label: 'Formulário de Verificação Inicial – 30 Dias',    can: p => p.isAdmin || p.canAccessFormulario30Dias },
-  { key: 'painel30dias',      label: 'Painel – Verificação Inicial – 30 Dias',         can: p => p.isAdmin || p.canAccessPainel30Dias },
-  { key: 'relatorio',         label: 'Relatório Final',                                can: p => p.isAdmin || p.canAccessRelatorio },
+type MonitoringLeaf = { key: MetasTab; label: string; can: (p: MonitoramentoAvaliacaoProps) => boolean };
+type MonitoringNavConfigEntry =
+  | { type: 'group'; label: string; items: MonitoringLeaf[] }
+  | ({ type: 'direct' } & MonitoringLeaf);
+
+// Fonte única de configuração da navegação: rótulo, permissão e
+// agrupamento vivem juntos aqui — nada disso é repetido em outro lugar.
+// As chaves (frequencia, alcance, eixo3...) continuam as mesmas de
+// sempre; só a apresentação passou a ser hierárquica.
+const MONITORING_NAV: MonitoringNavConfigEntry[] = [
+  {
+    type: 'group', label: 'Indicadores', items: [
+      { key: 'frequencia', label: 'Eixo 1 — Inclusão', can: p => p.isAdmin || p.canAccessFrequencia },
+      { key: 'alcance',    label: 'Eixo 2 — Alcance',  can: p => p.isAdmin || p.canAccessAlcance },
+    ],
+  },
+  {
+    type: 'group', label: 'Visitas In Loco', items: [
+      { key: 'eixo3', label: 'Nova Visita',        can: p => p.isAdmin || p.canAccessEixo3 },
+      { key: 'eixo4', label: 'Painel de Visitas',  can: p => p.isAdmin || p.canAccessEixo4 },
+    ],
+  },
+  {
+    type: 'group', label: 'Verificação Inicial — 30 Dias', items: [
+      { key: 'formulario30dias', label: 'Novo Formulário',       can: p => p.isAdmin || p.canAccessFormulario30Dias },
+      { key: 'painel30dias',     label: 'Painel de Resultados',  can: p => p.isAdmin || p.canAccessPainel30Dias },
+    ],
+  },
+  { type: 'direct', key: 'relatorio', label: 'Relatório Final', can: p => p.isAdmin || p.canAccessRelatorio },
 ];
+
+// Lista achatada de todas as abas — usada só para decidir a primeira aba
+// liberada quando as permissões chegam do Firestore.
+const TODAS_ABAS: MonitoringLeaf[] = MONITORING_NAV.flatMap(entry => (entry.type === 'group' ? entry.items : [entry]));
 
 export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (props) => {
   const { isAdmin, onGoHome, onSignOut, showToast, currentUserUid } = props;
   const [activeTab, setActiveTab] = useState<MetasTab | null>(null);
-  const visibleTabs = TABS.filter(t => t.can(props));
+
+  // Monta as entradas visíveis a partir da fonte única, na ordem definida
+  // acima. Um grupo que fica com só 1 item liberado por permissão vira
+  // acesso direto, na mesma posição — evita dropdown de item único.
+  const entries: NavEntry[] = MONITORING_NAV.reduce<NavEntry[]>((acc, entry) => {
+    if (entry.type === 'direct') {
+      if (entry.can(props)) acc.push({ type: 'direct', key: entry.key, label: entry.label });
+      return acc;
+    }
+    const visibleItems = entry.items.filter(i => i.can(props)).map(i => ({ key: i.key, label: i.label }));
+    if (visibleItems.length === 0) return acc;
+    if (visibleItems.length === 1) acc.push({ type: 'direct', key: visibleItems[0].key, label: visibleItems[0].label });
+    else acc.push({ type: 'group', label: entry.label, items: visibleItems });
+    return acc;
+  }, []);
 
   // Seleciona a primeira aba liberada assim que as permissões chegam do
   // Firestore (chegam de forma assíncrona, depois do primeiro render).
   // Só decide uma vez — não atropela a navegação manual do usuário.
   useEffect(() => {
     if (activeTab !== null) return;
-    const first = TABS.find(t => t.can(props));
+    const first = TODAS_ABAS.find(t => t.can(props));
     if (first) setActiveTab(first.key);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.isAdmin, props.canAccessRelatorio, props.canAccessFrequencia, props.canAccessAlcance, props.canAccessEixo3, props.canAccessEixo4, props.canAccessFormulario30Dias, props.canAccessPainel30Dias]);
@@ -69,16 +109,12 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
           {/* Escondida em Usuários: é página de gestão do app, sem lugar
               no fluxo de navegação normal — acesso só pelo Header. */}
           {activeTab !== 'gestao' && (
-            <div className="mb-8 flex gap-3 flex-wrap">
-              {visibleTabs.map(t => (
-                <button
-                  key={t.key}
-                  onClick={() => setActiveTab(t.key)}
-                  className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === t.key ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-                >
-                  {t.label}
-                </button>
-              ))}
+            <div className="mb-8">
+              <MonitoringNavigation
+                entries={entries}
+                activeKey={activeTab}
+                onSelect={key => setActiveTab(key as MetasTab)}
+              />
             </div>
           )}
 
