@@ -35,27 +35,25 @@ type MonitoringNavConfigEntry =
 // Fonte única de configuração da navegação: rótulo, permissão e
 // agrupamento vivem juntos aqui — nada disso é repetido em outro lugar.
 // As chaves (frequencia, alcance, eixo3...) continuam as mesmas de
-// sempre; só a apresentação passou a ser hierárquica.
+// sempre; só a apresentação passou a ser hierárquica, agora organizada
+// por tipo de interação (o que eu preencho × o que eu consulto), e não
+// mais por assunto.
 const MONITORING_NAV: MonitoringNavConfigEntry[] = [
   {
-    type: 'group', label: 'Indicadores', items: [
-      { key: 'frequencia', label: 'Eixo 1 — Inclusão', can: p => p.isAdmin || p.canAccessFrequencia },
-      { key: 'alcance',    label: 'Eixo 2 — Alcance',  can: p => p.isAdmin || p.canAccessAlcance },
+    type: 'group', label: 'Formulários', items: [
+      { key: 'eixo3',             label: 'Visita In Loco',                  can: p => p.isAdmin || p.canAccessEixo3 },
+      { key: 'formulario30dias',  label: 'Verificação Inicial — 30 Dias',   can: p => p.isAdmin || p.canAccessFormulario30Dias },
+      { key: 'relatorio',         label: 'Relatório Final',                 can: p => p.isAdmin || p.canAccessRelatorio },
     ],
   },
   {
-    type: 'group', label: 'Visitas In Loco', items: [
-      { key: 'eixo3', label: 'Nova Visita',        can: p => p.isAdmin || p.canAccessEixo3 },
-      { key: 'eixo4', label: 'Painel de Visitas',  can: p => p.isAdmin || p.canAccessEixo4 },
+    type: 'group', label: 'Painéis', items: [
+      { key: 'frequencia',   label: 'Eixo 1 — Inclusão',                can: p => p.isAdmin || p.canAccessFrequencia },
+      { key: 'alcance',      label: 'Eixo 2 — Alcance',                 can: p => p.isAdmin || p.canAccessAlcance },
+      { key: 'eixo4',        label: 'Visitas In Loco',                  can: p => p.isAdmin || p.canAccessEixo4 },
+      { key: 'painel30dias', label: 'Verificação Inicial — 30 Dias',    can: p => p.isAdmin || p.canAccessPainel30Dias },
     ],
   },
-  {
-    type: 'group', label: 'Verificação Inicial — 30 Dias', items: [
-      { key: 'formulario30dias', label: 'Novo Formulário',       can: p => p.isAdmin || p.canAccessFormulario30Dias },
-      { key: 'painel30dias',     label: 'Painel de Resultados',  can: p => p.isAdmin || p.canAccessPainel30Dias },
-    ],
-  },
-  { type: 'direct', key: 'relatorio', label: 'Relatório Final', can: p => p.isAdmin || p.canAccessRelatorio },
 ];
 
 // Lista achatada de todas as abas — usada só para decidir a primeira aba

@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 
 // Navegação hierárquica do módulo Monitoramento e Avaliação — grupos com
-// dropdown (Indicadores, Visitas In Loco, Verificação Inicial — 30 Dias)
-// e acessos diretos (Relatório Final, ou um grupo que ficou com só 1 item
-// visível por permissão). Puramente apresentacional: recebe os dados já
-// filtrados por permissão, não conhece o modelo de props do módulo.
+// dropdown (Formulários, Painéis) e acessos diretos (um grupo que ficou
+// com só 1 item visível por permissão). Puramente apresentacional: recebe
+// os dados já filtrados por permissão, não conhece o modelo de props do
+// módulo. Com só 2 grupos no topo, o mesmo layout serve mobile e desktop —
+// não há necessidade de um menu mobile hierárquico à parte.
 
 export type NavEntry =
   | { type: 'group'; label: string; items: { key: string; label: string }[] }
@@ -30,22 +31,19 @@ function isGroupActive(entry: NavEntry, activeKey: string | null): boolean {
 
 export const MonitoringNavigation: React.FC<MonitoringNavigationProps> = ({ entries, activeKey, onSelect }) => {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!openGroup && !mobileOpen) return;
+    if (!openGroup) return;
 
     function handleClickOutside(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOpenGroup(null);
-        setMobileOpen(false);
       }
     }
     function handleEscape(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         setOpenGroup(null);
-        setMobileOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -54,18 +52,16 @@ export const MonitoringNavigation: React.FC<MonitoringNavigationProps> = ({ entr
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [openGroup, mobileOpen]);
+  }, [openGroup]);
 
   function handleSelect(key: string) {
     onSelect(key);
     setOpenGroup(null);
-    setMobileOpen(false);
   }
 
   return (
     <nav ref={wrapperRef} aria-label="Navegação de Monitoramento e Avaliação">
-      {/* ── Desktop/tablet: grupos lado a lado ── */}
-      <div className="hidden md:flex gap-3 flex-wrap relative">
+      <div className="flex gap-3 flex-wrap relative">
         {entries.map(entry => {
           if (entry.type === 'direct') {
             const active = isGroupActive(entry, activeKey);
@@ -99,7 +95,7 @@ export const MonitoringNavigation: React.FC<MonitoringNavigationProps> = ({ entr
               {open && (
                 <div
                   role="menu"
-                  className="absolute left-0 top-full mt-2 min-w-[220px] bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-40"
+                  className="absolute left-0 top-full mt-2 min-w-[240px] max-h-[70vh] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-40"
                 >
                   {entry.items.map(item => {
                     const itemActive = item.key === activeKey;
@@ -110,10 +106,11 @@ export const MonitoringNavigation: React.FC<MonitoringNavigationProps> = ({ entr
                         role="menuitem"
                         aria-current={itemActive ? 'page' : undefined}
                         onClick={() => handleSelect(item.key)}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${
-                          itemActive ? 'bg-[#007770]/10 text-[#007770]' : 'text-slate-600 hover:bg-slate-50'
+                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors inline-flex items-center gap-2 ${
+                          itemActive ? 'bg-[#007770]/10 text-[#007770] font-bold' : 'text-slate-600 hover:bg-slate-50 font-semibold'
                         }`}
                       >
+                        <Check size={14} className={itemActive ? 'opacity-100' : 'opacity-0'} aria-hidden="true" />
                         {item.label}
                       </button>
                     );
@@ -123,70 +120,6 @@ export const MonitoringNavigation: React.FC<MonitoringNavigationProps> = ({ entr
             </div>
           );
         })}
-      </div>
-
-      {/* ── Mobile: controle único e compacto ── */}
-      <div className="flex md:hidden relative">
-        <button
-          type="button"
-          aria-haspopup="true"
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen(o => !o)}
-          className={`${triggerBase} w-full justify-between ${triggerInactive}`}
-        >
-          Monitoramento e Avaliação
-          <ChevronDown size={16} className={`transition-transform ${mobileOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {mobileOpen && (
-          <div
-            role="menu"
-            className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-40 max-h-[70vh] overflow-y-auto"
-          >
-            {entries.map(entry => {
-              if (entry.type === 'direct') {
-                const active = entry.key === activeKey;
-                return (
-                  <button
-                    key={entry.key}
-                    type="button"
-                    role="menuitem"
-                    aria-current={active ? 'page' : undefined}
-                    onClick={() => handleSelect(entry.key)}
-                    className={`w-full text-left px-4 py-2.5 text-sm font-bold transition-colors ${
-                      active ? 'bg-[#007770]/10 text-[#007770]' : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {entry.label}
-                  </button>
-                );
-              }
-              return (
-                <div key={entry.label}>
-                  <p className="px-4 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    {entry.label}
-                  </p>
-                  {entry.items.map(item => {
-                    const itemActive = item.key === activeKey;
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        role="menuitem"
-                        aria-current={itemActive ? 'page' : undefined}
-                        onClick={() => handleSelect(item.key)}
-                        className={`w-full text-left pl-6 pr-4 py-2.5 text-sm font-semibold transition-colors ${
-                          itemActive ? 'bg-[#007770]/10 text-[#007770]' : 'text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </nav>
   );
