@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
 import { enriquecerDados, formatarPeriodo } from '../../services/csvService'
+import { COORDS_GOIAS } from '../../components/monitor/coordsGoias'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import ChartCard from '../../components/monitor/ui/ChartCard'
 import Loader from '../../components/monitor/ui/Loader'
@@ -8,6 +9,9 @@ import EmptyState from '../../components/monitor/ui/EmptyState'
 import MapaMunicipios from '../../components/monitor/ui/MapaMunicipios'
 import { Select } from '../../components/monitor/ui/Input'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import IndicatorDrilldown, { DrilldownComposicao, DrilldownFormula, DrilldownLista } from '../../components/monitor/ui/IndicatorDrilldown'
+
+const TODOS_MUNICIPIOS_REFERENCIA = Object.keys(COORDS_GOIAS).sort((a, b) => a.localeCompare(b, 'pt-BR'))
 
 const tooltipStyle = {
   contentStyle: {
@@ -36,6 +40,7 @@ export default function Alcance() {
   const [periodoSel, setPeriodoSel] = useState('')
   const [dadosEnriquecidos, setDadosEnriquecidos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [drillAberto, setDrillAberto] = useState(false)
 
   useEffect(() => {
     buscarPeriodos().then(ps => { setPeriodos(ps); if (ps.length) setPeriodoSel(ps[0].periodo) })
@@ -74,6 +79,10 @@ export default function Alcance() {
   const top10Maior  = munOrdenado.slice(0, 10).map(([name, total]) => ({ name, total }))
   const top10Menor  = [...munOrdenado].sort((a, b) => a[1] - b[1]).slice(0, 10).map(([name, total]) => ({ name, total }))
 
+  // Não atendidos — mesma fonte de referência já usada nos formulários
+  // (Visita In Loco / Verificação 30 Dias), não uma lista inventada.
+  const municipiosNaoAtendidos = TODOS_MUNICIPIOS_REFERENCIA.filter(m => !municipiosAtivos.has(m))
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
@@ -94,8 +103,8 @@ export default function Alcance() {
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <KpiCard icon={<SvgIcon path={ICONS.map} />} label="Municípios Atendidos" value={num_municipios} sub={`de ${TOTAL_MUNICIPIOS_GO} municípios de Goiás`} color="blue" />
-        <KpiCard icon={<SvgIcon path={ICONS.check} />} label="Cobertura Territorial" value={`${ind_territorial.toFixed(1)}%`} sub="meta: máxima cobertura dos 246 municípios" color={ind_territorial >= 50 ? 'green' : 'warn'} />
+        <KpiCard icon={<SvgIcon path={ICONS.map} />} label="Municípios Atendidos" value={num_municipios} sub={`de ${TOTAL_MUNICIPIOS_GO} municípios de Goiás`} color="blue" onDetails={() => setDrillAberto(true)} />
+        <KpiCard icon={<SvgIcon path={ICONS.check} />} label="Cobertura Territorial" value={`${ind_territorial.toFixed(1)}%`} sub="meta: máxima cobertura dos 246 municípios" color={ind_territorial >= 50 ? 'green' : 'warn'} onDetails={() => setDrillAberto(true)} />
       </div>
 
       {/* Barra de cobertura */}
@@ -191,6 +200,27 @@ export default function Alcance() {
           })}
         </div>
       </div>
+
+      <IndicatorDrilldown
+        aberto={drillAberto}
+        onFechar={() => setDrillAberto(false)}
+        titulo="Cobertura Territorial"
+        contexto={formatarPeriodo(periodoSel)}
+      >
+        <DrilldownComposicao itens={[
+          { label: 'Municípios atendidos', valor: num_municipios },
+          { label: `Total de referência (${TODOS_MUNICIPIOS_REFERENCIA.length} municípios cadastrados)`, valor: TODOS_MUNICIPIOS_REFERENCIA.length },
+          { label: 'Resultado', valor: `${ind_territorial.toFixed(1)}%`, destaque: true },
+        ]} />
+        <DrilldownFormula texto={`${num_municipios} municípios com aprendiz ÷ ${TOTAL_MUNICIPIOS_GO} × 100 = ${ind_territorial.toFixed(1)}%`} />
+        <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-family)', marginBottom: '20px' }}>
+          A lista de referência de municípios (mesma usada nos formulários de Visita In Loco e Verificação Inicial) tem {TODOS_MUNICIPIOS_REFERENCIA.length} municípios cadastrados; o indicador de Cobertura Territorial usa {TOTAL_MUNICIPIOS_GO} como total oficial de Goiás — diferença já existente na base, não alterada nesta manutenção.
+        </p>
+        <p style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontFamily: 'var(--font-family)' }}>
+          Municípios não atendidos ({municipiosNaoAtendidos.length})
+        </p>
+        <DrilldownLista colunas={['Município']} linhas={municipiosNaoAtendidos.map(m => [m])} />
+      </IndicatorDrilldown>
     </div>
   )
 }

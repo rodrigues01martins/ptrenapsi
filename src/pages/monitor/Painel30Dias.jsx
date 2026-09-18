@@ -14,6 +14,7 @@ import {
   buscarPeriodosDisponiveis,
   buscarRespostasPeriodo,
 } from '../../services/verificacao30DiasService'
+import IndicatorDrilldown, { DrilldownComposicao, DrilldownLista } from '../../components/monitor/ui/IndicatorDrilldown'
 
 const tooltipStyle = {
   contentStyle: {
@@ -57,6 +58,8 @@ export default function Painel30Dias() {
   const [loadingPeriodo, setLoadingPeriodo] = useState(false)
   const [municipioSel, setMunicipioSel] = useState('')
   const [orgaoSel, setOrgaoSel] = useState('')
+  const [drillIndicador, setDrillIndicador] = useState(null) // null | 'IRI'|'IRA'|'IEB'|'IAA'|'IACA'
+  const [drillFormularios, setDrillFormularios] = useState(false)
 
   useEffect(() => {
     buscarPeriodosDisponiveis().then(lista => {
@@ -180,7 +183,7 @@ export default function Painel30Dias() {
         <>
           {/* ── Bloco 1: Visão geral ── */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-            <KpiCard icon={<SvgIcon path={ICONS.form} />} label="Formulários Respondidos" value={Ns} sub={formatarPeriodo(periodoSel)} color="blue" />
+            <KpiCard icon={<SvgIcon path={ICONS.form} />} label="Formulários Respondidos" value={Ns} sub={formatarPeriodo(periodoSel)} color="blue" onDetails={() => setDrillFormularios(true)} />
             <KpiCard icon={<SvgIcon path={ICONS.map} />} label="Municípios Representados" value={municipiosRepresentados} color="teal" />
             <KpiCard icon={<SvgIcon path={ICONS.org} />} label="Órgãos Representados" value={orgaosRepresentados} color="purple" />
           </div>
@@ -199,6 +202,7 @@ export default function Painel30Dias() {
                   value={formatarPercentual(ind.percentual)}
                   sub={ind.percentual === null ? 'Sem base para cálculo' : `Base válida: ${ind.baseValida} respostas`}
                   color={ind.percentual === null ? 'danger' : 'blue'}
+                  onDetails={ind.percentual !== null ? () => setDrillIndicador(def.id) : undefined}
                 />
               )
             })}
@@ -314,6 +318,62 @@ export default function Painel30Dias() {
           </div>
         </>
       )}
+
+      {/* ── Drill-down: indicador → perguntas que o compõem (mesma calculateQuestionStats da tabela geral) ── */}
+      <IndicatorDrilldown
+        aberto={drillIndicador !== null}
+        onFechar={() => setDrillIndicador(null)}
+        contexto={formatarPeriodo(periodoSel)}
+        titulo={drillIndicador ? `${drillIndicador} — ${INDICATOR_DEFINITIONS.find(d => d.id === drillIndicador)?.nome}` : ''}
+      >
+        {drillIndicador && (() => {
+          const def = INDICATOR_DEFINITIONS.find(d => d.id === drillIndicador)
+          const ind = indicadores[drillIndicador]
+          const linhas = def.questoes.map(qId => {
+            const q = QUESTION_DEFINITIONS.find(x => x.id === qId)
+            const stats = calculateQuestionStats(qId, respostasFiltradas.map(r => r.respostas?.[qId]))
+            return [
+              `${qId.toUpperCase()} — ${q.textoResumido}`,
+              stats.positivas,
+              stats.negativas,
+              stats.naoAplicaveis || '—',
+              stats.baseValida,
+              formatarPercentual(stats.percentual),
+            ]
+          })
+          return (
+            <>
+              <DrilldownComposicao itens={[
+                { label: 'Resultado', valor: formatarPercentual(ind.percentual), destaque: true },
+                { label: 'Base válida', valor: ind.baseValida },
+                { label: 'Perguntas que compõem o indicador', valor: def.questoes.length },
+              ]} />
+              <DrilldownLista colunas={['Pergunta', 'Positivas', 'Negativas', 'Não aplicáveis', 'Base válida', '% Positivo']} linhas={linhas} />
+            </>
+          )
+        })()}
+      </IndicatorDrilldown>
+
+      {/* ── Drill-down: Formulários Respondidos → lista dos formulários do período/filtro ── */}
+      <IndicatorDrilldown
+        aberto={drillFormularios}
+        onFechar={() => setDrillFormularios(false)}
+        titulo="Formulários Respondidos"
+        contexto={formatarPeriodo(periodoSel)}
+        vazio={respostasFiltradas.length === 0}
+        vazioDescricao="Não existem formulários associados a este indicador na competência selecionada."
+      >
+        <DrilldownComposicao itens={[{ label: 'Formulários no período/filtro', valor: respostasFiltradas.length, destaque: true }]} />
+        <DrilldownLista
+          colunas={['Matrícula', 'Município', 'Órgão/local', 'Data de aplicação']}
+          linhas={respostasFiltradas.map(r => [
+            r.identificacao?.matricula,
+            r.identificacao?.municipioNome,
+            r.identificacao?.orgaoBeneficiarioNome,
+            r.identificacao?.dataAplicacao,
+          ])}
+        />
+      </IndicatorDrilldown>
     </div>
   )
 }

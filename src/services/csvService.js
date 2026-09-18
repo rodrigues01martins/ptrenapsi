@@ -267,3 +267,13 @@ export function enriquecerDados(dados) {
     _kpis: calcularKPIs(row)
   }))
 }
+
+// ============================================================
+// SELEÇÃO POR FLAG — usada tanto pelos agregados (calcularAgregados)
+// quanto pelo drill-down dos indicadores, para garantir que a lista
+// mostrada seja EXATAMENTE o que compõe a contagem do KPI (mesmo array
+// de entrada, mesmo flag, nunca um filtro paralelo).
+// ============================================================
+export function selecionarPorFlag(dadosComKPIs, flag) {
+  return dadosComKPIs.filter(r => r._kpis[flag] === 1)
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
-import { enriquecerDados, calcularAgregados, formatarPeriodo } from '../../services/csvService'
+import { enriquecerDados, calcularAgregados, formatarPeriodo, selecionarPorFlag } from '../../services/csvService'
 import { baseFinanceira, baseGerencial } from '../../services/classificacaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import ChartCard from '../../components/monitor/ui/ChartCard'
@@ -8,6 +8,24 @@ import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
 import NotaMetodologica from '../../components/monitor/ui/NotaMetodologica'
 import { Select } from '../../components/monitor/ui/Input'
+import IndicatorDrilldown, { DrilldownComposicao, DrilldownFormula, DrilldownLista } from '../../components/monitor/ui/IndicatorDrilldown'
+
+const LABELS_SITUACAO = {
+  ativo: 'Ativo',
+  inconsistencia_cadastral: 'Inconsistência cadastral',
+  admitido_e_desligado_no_mes: 'Admitido e desligado no mês',
+  desligamento_antecipado: 'Desligamento antecipado',
+  termino_contrato: 'Término de contrato',
+}
+
+function linhaRegistro(r) {
+  return [
+    r.nome || '—',
+    r.cidade || '—',
+    r.data_admin || r.data_demiss || '—',
+    LABELS_SITUACAO[r._classificacao?.situacao] || r._classificacao?.situacao || '—',
+  ]
+}
 
 const SvgIcon = ({ path, size = 28 }) => (
   <svg width={size} height={size} viewBox="0 -960 960 960" fill="var(--brand-primary)">
@@ -22,7 +40,7 @@ const ICONS = {
   reposicao:'M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z',
 }
 
-function GaugeCard({ label, value, sub, meta, color = 'blue', icon }) {
+function GaugeCard({ label, value, sub, meta, color = 'blue', icon, onDetails }) {
   const pct = Math.min(value, 100)
   const colorMap = {
     blue:   'var(--brand-primary)',
@@ -32,16 +50,23 @@ function GaugeCard({ label, value, sub, meta, color = 'blue', icon }) {
     teal:   'var(--brand-secondary)',
   }
   const barColor = colorMap[color] || colorMap.blue
+  const acionavel = !!onDetails
 
   return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border-default)',
-      borderRadius: 'var(--radius-md)',
-      padding: '20px',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
+    <div
+      onClick={onDetails}
+      role={acionavel ? 'button' : undefined}
+      tabIndex={acionavel ? 0 : undefined}
+      onKeyDown={acionavel ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDetails() } } : undefined}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 'var(--radius-md)',
+        padding: '20px',
+        position: 'relative',
+        overflow: 'hidden',
+        cursor: acionavel ? 'pointer' : undefined,
+      }}>
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0,
         height: '4px', background: barColor,
@@ -77,6 +102,12 @@ function GaugeCard({ label, value, sub, meta, color = 'blue', icon }) {
           {meta}
         </p>
       )}
+
+      {acionavel && (
+        <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--brand-primary)', fontFamily: 'var(--font-family)', marginTop: '10px' }}>
+          Ver detalhes →
+        </p>
+      )}
     </div>
   )
 }
@@ -87,6 +118,7 @@ export default function Frequencia() {
   const [agregados, setAgregados] = useState(null)
   const [dadosEnriquecidos, setDadosEnriquecidos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [drill, setDrill] = useState(null) // null | 'evasao' | 'iniciados' | 'finalizados' | 'reposicao' | 'vagas'
 
   useEffect(() => {
     buscarPeriodos().then(ps => { setPeriodos(ps); if (ps.length) setPeriodoSel(ps[0].periodo) })
@@ -156,6 +188,12 @@ export default function Frequencia() {
   const corEvasao    = ind_evasao <= 15 ? 'green' : 'danger'
   const corReposicao = ind_reposicao < 50 ? 'green' : 'danger'
 
+  // Listas de drill-down — sempre derivadas do MESMO array e MESMO flag
+  // usados pelo agregado (calcularAgregados), nunca um filtro paralelo.
+  const registrosEvasao      = selecionarPorFlag(dadosFinanceiros, 'evasao')
+  const registrosIniciados   = selecionarPorFlag(dadosFinanceiros, 'contrato_iniciado')
+  const registrosFinalizados = selecionarPorFlag(dadosFinanceiros, 'contrato_finalizado')
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
@@ -189,6 +227,7 @@ export default function Frequencia() {
           value={agregados.contratos_iniciados}
           sub="novas entradas no mês"
           color="green"
+          onDetails={registrosIniciados.length ? () => setDrill('iniciados') : undefined}
         />
         <KpiCard
           icon={<SvgIcon path={ICONS.evasao} />}
@@ -196,6 +235,7 @@ export default function Frequencia() {
           value={total_evasoes}
           sub="saídas antes do término"
           color={total_evasoes > 0 ? 'danger' : 'green'}
+          onDetails={registrosEvasao.length ? () => setDrill('evasao') : undefined}
         />
         <KpiCard
           icon={<SvgIcon path={ICONS.freq} />}
@@ -203,6 +243,7 @@ export default function Frequencia() {
           value={agregados.contratos_finalizados}
           sub="término previsto no mês"
           color="teal"
+          onDetails={registrosFinalizados.length ? () => setDrill('finalizados') : undefined}
         />
       </div>
 
@@ -228,6 +269,7 @@ export default function Frequencia() {
           sub={`${jovensAtivos} vagas ocupadas de ${VAGAS_TOTAL.toLocaleString('pt-BR')}`}
           meta="Meta: 100% das vagas preenchidas"
           color="blue"
+          onDetails={() => setDrill('vagas')}
         />
         <GaugeCard
           icon={<SvgIcon path={ICONS.freq} />}
@@ -244,6 +286,7 @@ export default function Frequencia() {
           sub={`${total_evasoes} evasões de ${jovensAtivos} vagas ativas`}
           meta="Meta: ≤ 15% de evasão"
           color={corEvasao}
+          onDetails={registrosEvasao.length ? () => setDrill('evasao') : undefined}
         />
         <GaugeCard
           icon={<SvgIcon path={ICONS.reposicao} />}
@@ -252,6 +295,7 @@ export default function Frequencia() {
           sub={`${agregados.contratos_iniciados} entradas para ${agregados.contratos_finalizados} saídas`}
           meta="Meta: < 50% das vagas liberadas repostas"
           color={corReposicao}
+          onDetails={() => setDrill('reposicao')}
         />
       </div>
 
@@ -288,6 +332,78 @@ export default function Frequencia() {
           </table>
         </div>
       </ChartCard>
+
+      {/* ── Drill-down: mesmo array e mesmo flag usados no KPI, nunca recalculado ── */}
+      <IndicatorDrilldown
+        aberto={drill !== null}
+        onFechar={() => setDrill(null)}
+        contexto={formatarPeriodo(periodoSel)}
+        titulo={{
+          evasao: 'Taxa de Evasão Antecipada',
+          iniciados: 'Contratos Iniciados',
+          finalizados: 'Contratos Finalizados',
+          reposicao: 'Reposição de Vagas',
+          vagas: 'Preenchimento de Vagas',
+        }[drill] || ''}
+      >
+        {drill === 'evasao' && (
+          <>
+            <DrilldownComposicao itens={[
+              { label: 'Resultado', valor: `${ind_evasao.toFixed(1)}%`, destaque: true },
+              { label: 'Evasões consideradas', valor: total_evasoes },
+              { label: 'Base considerada (vagas ativas)', valor: jovensAtivos },
+            ]} />
+            <DrilldownFormula texto={`${total_evasoes} evasões ÷ ${jovensAtivos} vagas ativas = ${ind_evasao.toFixed(1)}%`} />
+            <DrilldownLista colunas={['Nome', 'Município', 'Data', 'Situação']} linhas={registrosEvasao.map(linhaRegistro)} />
+          </>
+        )}
+
+        {drill === 'iniciados' && (
+          <>
+            <DrilldownComposicao itens={[{ label: 'Contratos iniciados no mês', valor: registrosIniciados.length, destaque: true }]} />
+            <DrilldownLista colunas={['Nome', 'Município', 'Data', 'Situação']} linhas={registrosIniciados.map(linhaRegistro)} />
+          </>
+        )}
+
+        {drill === 'finalizados' && (
+          <>
+            <DrilldownComposicao itens={[{ label: 'Contratos finalizados no mês', valor: registrosFinalizados.length, destaque: true }]} />
+            <DrilldownLista colunas={['Nome', 'Município', 'Data', 'Situação']} linhas={registrosFinalizados.map(linhaRegistro)} />
+          </>
+        )}
+
+        {drill === 'reposicao' && (
+          <>
+            <DrilldownComposicao itens={[
+              { label: 'Entradas', valor: agregados.contratos_iniciados },
+              { label: 'Saídas', valor: agregados.contratos_finalizados },
+              { label: 'Resultado', valor: `${ind_reposicao.toFixed(1)}%`, destaque: true },
+            ]} />
+            <DrilldownFormula texto={`${agregados.contratos_iniciados} entradas ÷ ${agregados.contratos_finalizados} saídas × 100 = ${ind_reposicao.toFixed(1)}%`} />
+            <p style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontFamily: 'var(--font-family)' }}>
+              Entradas consideradas
+            </p>
+            <div style={{ marginBottom: '20px' }}>
+              <DrilldownLista colunas={['Nome', 'Município', 'Data', 'Situação']} linhas={registrosIniciados.map(linhaRegistro)} />
+            </div>
+            <p style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontFamily: 'var(--font-family)' }}>
+              Saídas consideradas
+            </p>
+            <DrilldownLista colunas={['Nome', 'Município', 'Data', 'Situação']} linhas={registrosFinalizados.map(linhaRegistro)} />
+          </>
+        )}
+
+        {drill === 'vagas' && (
+          <>
+            <DrilldownComposicao itens={[
+              { label: 'Vagas ocupadas', valor: jovensAtivos },
+              { label: 'Capacidade', valor: VAGAS_TOTAL.toLocaleString('pt-BR') },
+              { label: 'Resultado', valor: `${ind_vagas.toFixed(1)}%`, destaque: true },
+            ]} />
+            <DrilldownFormula texto={`${jovensAtivos} vagas ocupadas ÷ ${VAGAS_TOTAL.toLocaleString('pt-BR')} vagas × 100 = ${ind_vagas.toFixed(1)}%`} />
+          </>
+        )}
+      </IndicatorDrilldown>
     </div>
   )
 }

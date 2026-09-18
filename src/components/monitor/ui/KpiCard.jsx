@@ -7,11 +7,19 @@ const colorMap = {
   danger:  { bar: 'var(--status-danger-text)',   value: 'var(--status-danger-text)'   },
 }
 
-export default function KpiCard({ label, value, sub, color = 'blue', icon }) {
+// onDetails é opcional — quando fornecido, o card ganha affordance "Ver
+// detalhes" e vira acionável (clique + teclado), sem mudar em nada os
+// cards que não passam essa prop.
+export default function KpiCard({ label, value, sub, color = 'blue', icon, onDetails }) {
   const c = colorMap[color] || colorMap.blue
+  const acionavel = !!onDetails
 
   return (
     <div
+      onClick={onDetails}
+      role={acionavel ? 'button' : undefined}
+      tabIndex={acionavel ? 0 : undefined}
+      onKeyDown={acionavel ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDetails() } } : undefined}
       style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border-default)',
@@ -19,6 +27,7 @@ export default function KpiCard({ label, value, sub, color = 'blue', icon }) {
         padding: '20px',
         position: 'relative',
         overflow: 'hidden',
+        cursor: acionavel ? 'pointer' : undefined,
       }}
     >
       {/* Barra superior colorida */}
@@ -78,6 +87,19 @@ export default function KpiCard({ label, value, sub, color = 'blue', icon }) {
           fontFamily: 'var(--font-family)',
         }}>
           {sub}
+        </p>
+      )}
+
+      {/* Affordance de drill-down — nunca só o card inteiro sem indicação */}
+      {acionavel && (
+        <p style={{
+          fontSize: '12px',
+          fontWeight: 700,
+          color: 'var(--brand-primary)',
+          fontFamily: 'var(--font-family)',
+          marginTop: '10px',
+        }}>
+          Ver detalhes →
         </p>
       )}
     </div>
