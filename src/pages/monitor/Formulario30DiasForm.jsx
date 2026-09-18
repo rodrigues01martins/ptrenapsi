@@ -5,7 +5,7 @@ import Badge from '../../components/monitor/ui/Badge'
 import { Input, Select } from '../../components/monitor/ui/Input'
 import AutosaveStatus from '../../components/monitor/ui/AutosaveStatus'
 import { useAutosave } from '../../hooks/useAutosave'
-import { COORDS_GOIAS } from '../../components/monitor/coordsGoias'
+import { MUNICIPIOS_GOIAS } from '../../data/municipiosGoias'
 import {
   QUESTION_DEFINITIONS,
   isApplicable,
@@ -16,7 +16,7 @@ import {
   enviarVerificacao30Dias,
 } from '../../services/verificacao30DiasService'
 
-const MUNICIPIOS = Object.keys(COORDS_GOIAS).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+const MUNICIPIOS = MUNICIPIOS_GOIAS.map(m => m.nome).sort((a, b) => a.localeCompare(b, 'pt-BR'))
 
 const DIMENSAO_BADGE = {
   IRI: 'brand',

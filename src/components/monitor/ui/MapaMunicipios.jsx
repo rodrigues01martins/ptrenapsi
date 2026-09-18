@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { COORDS_GOIAS } from '../coordsGoias'
+import { encontrarMunicipioGoias } from '../../../data/municipiosGoias'
 
 // Mapa de círculos proporcionais por município — reutilizado pelo Eixo 2
 // (Alcance, contagem de aprendizes) e pelo Gerencial (contagem de jovens
@@ -31,11 +31,15 @@ export default function MapaMunicipios({ contagensPorCidade, rotulo = 'registros
       let naoEncontrados = []
 
       Object.entries(cidadeMap).forEach(([cidade, count]) => {
-        const coords = COORDS_GOIAS[cidade]
-        if (!coords) {
+        // Match tolerante a acento/caixa contra a base canônica — antes
+        // era um lookup direto em COORDS_GOIAS (243 registros, sensível
+        // a acento), por isso alguns municípios nunca apareciam no mapa.
+        const municipio = encontrarMunicipioGoias(cidade)
+        if (!municipio) {
           naoEncontrados.push(cidade)
           return
         }
+        const coords = [municipio.latitude, municipio.longitude]
 
         const ratio = maxCount > minCount ? (count - minCount) / (maxCount - minCount) : 1
         const radius = 6 + ratio * 34

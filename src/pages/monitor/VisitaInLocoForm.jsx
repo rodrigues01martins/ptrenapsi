@@ -4,7 +4,7 @@ import Button from '../../components/monitor/ui/Button'
 import { Input, Select } from '../../components/monitor/ui/Input'
 import AutosaveStatus from '../../components/monitor/ui/AutosaveStatus'
 import { useAutosave } from '../../hooks/useAutosave'
-import { COORDS_GOIAS } from '../../components/monitor/coordsGoias'
+import { MUNICIPIOS_GOIAS } from '../../data/municipiosGoias'
 import {
   BLOCOS,
   PONTUACAO_MAXIMA,
@@ -17,7 +17,7 @@ import {
   enviarVisita,
 } from '../../services/inLocoService'
 
-const MUNICIPIOS = Object.keys(COORDS_GOIAS).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+const MUNICIPIOS = MUNICIPIOS_GOIAS.map(m => m.nome).sort((a, b) => a.localeCompare(b, 'pt-BR'))
 
 function agora() {
   const now = new Date()

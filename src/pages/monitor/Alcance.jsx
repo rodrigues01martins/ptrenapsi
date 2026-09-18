@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
 import { enriquecerDados, formatarPeriodo } from '../../services/csvService'
-import { COORDS_GOIAS } from '../../components/monitor/coordsGoias'
+import { MUNICIPIOS_GOIAS, TOTAL_MUNICIPIOS_GOIAS, normalizeMunicipioName } from '../../data/municipiosGoias'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import ChartCard from '../../components/monitor/ui/ChartCard'
 import Loader from '../../components/monitor/ui/Loader'
@@ -10,8 +10,6 @@ import MapaMunicipios from '../../components/monitor/ui/MapaMunicipios'
 import { Select } from '../../components/monitor/ui/Input'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import IndicatorDrilldown, { DrilldownComposicao, DrilldownFormula, DrilldownLista } from '../../components/monitor/ui/IndicatorDrilldown'
-
-const TODOS_MUNICIPIOS_REFERENCIA = Object.keys(COORDS_GOIAS).sort((a, b) => a.localeCompare(b, 'pt-BR'))
 
 const tooltipStyle = {
   contentStyle: {
@@ -58,13 +56,17 @@ export default function Alcance() {
   if (loading) return <Loader message="Carregando dados territoriais..." />
   if (!dadosEnriquecidos.length) return <EmptyState title="Nenhum dado encontrado" description="Faça upload de um CSV na aba Upload primeiro." />
 
-  const TOTAL_MUNICIPIOS_GO = 246
-
-  const municipiosAtivos = new Set(
-    dadosEnriquecidos.map(r => (r.cidade || '').toUpperCase().trim()).filter(Boolean)
+  // Match tolerante a acento/caixa contra a base canônica (246 municípios)
+  // — antes comparava string bruta em uppercase, então "GOIANIA" (sem
+  // acento, comum em export de planilha) nunca batia com a grafia
+  // oficial e podia contar como um "município" a mais, inexistente.
+  const cidadesNormalizadasNoCSV = new Set(
+    dadosEnriquecidos.map(r => normalizeMunicipioName(r.cidade)).filter(Boolean)
   )
-  const num_municipios = municipiosAtivos.size
-  const ind_territorial = (num_municipios / TOTAL_MUNICIPIOS_GO) * 100
+  const municipiosAtendidos = MUNICIPIOS_GOIAS.filter(m => cidadesNormalizadasNoCSV.has(normalizeMunicipioName(m.nome)))
+  const municipiosNaoAtendidos = MUNICIPIOS_GOIAS.filter(m => !cidadesNormalizadasNoCSV.has(normalizeMunicipioName(m.nome)))
+  const num_municipios = municipiosAtendidos.length
+  const ind_territorial = (num_municipios / TOTAL_MUNICIPIOS_GOIAS) * 100
 
   const cidadeMap = {}
   dadosEnriquecidos.forEach(r => {
@@ -78,10 +80,6 @@ export default function Alcance() {
   const munOrdenado = Object.entries(cidadeMap).sort((a, b) => b[1] - a[1])
   const top10Maior  = munOrdenado.slice(0, 10).map(([name, total]) => ({ name, total }))
   const top10Menor  = [...munOrdenado].sort((a, b) => a[1] - b[1]).slice(0, 10).map(([name, total]) => ({ name, total }))
-
-  // Não atendidos — mesma fonte de referência já usada nos formulários
-  // (Visita In Loco / Verificação 30 Dias), não uma lista inventada.
-  const municipiosNaoAtendidos = TODOS_MUNICIPIOS_REFERENCIA.filter(m => !municipiosAtivos.has(m))
 
   return (
     <div>
@@ -103,7 +101,7 @@ export default function Alcance() {
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <KpiCard icon={<SvgIcon path={ICONS.map} />} label="Municípios Atendidos" value={num_municipios} sub={`de ${TOTAL_MUNICIPIOS_GO} municípios de Goiás`} color="blue" onDetails={() => setDrillAberto(true)} />
+        <KpiCard icon={<SvgIcon path={ICONS.map} />} label="Municípios Atendidos" value={num_municipios} sub={`de ${TOTAL_MUNICIPIOS_GOIAS} municípios de Goiás`} color="blue" onDetails={() => setDrillAberto(true)} />
         <KpiCard icon={<SvgIcon path={ICONS.check} />} label="Cobertura Territorial" value={`${ind_territorial.toFixed(1)}%`} sub="meta: máxima cobertura dos 246 municípios" color={ind_territorial >= 50 ? 'green' : 'warn'} onDetails={() => setDrillAberto(true)} />
       </div>
 
@@ -114,7 +112,7 @@ export default function Alcance() {
             Dimensão Territorial do Programa
           </p>
           <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brand-primary)', fontFamily: 'var(--font-family)' }}>
-            {num_municipios} / {TOTAL_MUNICIPIOS_GO} municípios
+            {num_municipios} / {TOTAL_MUNICIPIOS_GOIAS} municípios
           </p>
         </div>
         <div style={{ width: '100%', height: '8px', background: 'var(--border-default)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
@@ -209,17 +207,14 @@ export default function Alcance() {
       >
         <DrilldownComposicao itens={[
           { label: 'Municípios atendidos', valor: num_municipios },
-          { label: `Total de referência (${TODOS_MUNICIPIOS_REFERENCIA.length} municípios cadastrados)`, valor: TODOS_MUNICIPIOS_REFERENCIA.length },
+          { label: 'Total de referência (Goiás)', valor: TOTAL_MUNICIPIOS_GOIAS },
           { label: 'Resultado', valor: `${ind_territorial.toFixed(1)}%`, destaque: true },
         ]} />
-        <DrilldownFormula texto={`${num_municipios} municípios com aprendiz ÷ ${TOTAL_MUNICIPIOS_GO} × 100 = ${ind_territorial.toFixed(1)}%`} />
-        <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-family)', marginBottom: '20px' }}>
-          A lista de referência de municípios (mesma usada nos formulários de Visita In Loco e Verificação Inicial) tem {TODOS_MUNICIPIOS_REFERENCIA.length} municípios cadastrados; o indicador de Cobertura Territorial usa {TOTAL_MUNICIPIOS_GO} como total oficial de Goiás — diferença já existente na base, não alterada nesta manutenção.
-        </p>
+        <DrilldownFormula texto={`${num_municipios} municípios com aprendiz ÷ ${TOTAL_MUNICIPIOS_GOIAS} × 100 = ${ind_territorial.toFixed(1)}%`} />
         <p style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontFamily: 'var(--font-family)' }}>
           Municípios não atendidos ({municipiosNaoAtendidos.length})
         </p>
-        <DrilldownLista colunas={['Município']} linhas={municipiosNaoAtendidos.map(m => [m])} />
+        <DrilldownLista colunas={['Município']} linhas={municipiosNaoAtendidos.map(m => [m.nome])} />
       </IndicatorDrilldown>
     </div>
   )
