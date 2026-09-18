@@ -1,6 +1,9 @@
 export default function PreviewTable({ dados }) {
   if (!dados.length) return null
-  const cols = Object.keys(dados[0])
+  // `_classificacao` (e qualquer outro campo interno prefixado com `_`) é
+  // metadado derivado pela Etapa 3, não uma coluna do CSV — nunca deve
+  // aparecer aqui, e é um objeto, não um valor renderizável em célula.
+  const cols = Object.keys(dados[0]).filter(c => !c.startsWith('_'))
   const amostra = dados.slice(0, 8)
 
   return (
