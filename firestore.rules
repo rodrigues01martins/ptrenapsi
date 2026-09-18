@@ -20,24 +20,52 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data[field] == true;
     }
+    // Um documento de auto-cadastro (users/{uid} criado pelo próprio usuário)
+    // só pode nascer com privilégios zerados — nunca admin, nunca nenhuma
+    // permissão individual habilitada. É exatamente o que App.tsx grava ao
+    // criar o doc no primeiro login; qualquer valor diferente enviado
+    // diretamente à API é bloqueado aqui.
+    function semPermissoesElevadas(dados) {
+      return dados.role == 'user' &&
+        dados.canAccessRelatorio == false &&
+        dados.canAccessEntry == false &&
+        dados.canAccessReport == false &&
+        dados.canAccessUpload == false &&
+        dados.canAccessGerencial == false &&
+        dados.canAccessRepasse == false &&
+        dados.canAccessHistorico == false &&
+        dados.canAccessFrequencia == false &&
+        dados.canAccessAlcance == false &&
+        dados.canAccessEixo3 == false &&
+        dados.canAccessEixo4 == false &&
+        dados.canAccessFormulario30Dias == false &&
+        dados.canAccessPainel30Dias == false;
+    }
 
     // ── Usuários ─────────────────────────────────────────────
     match /users/{userId} {
       // Qualquer autenticado pode ler (necessário para o painel de gestão)
       allow read: if isAuthenticated();
-      // Usuário cria o próprio documento no login OU admin cria para qualquer usuário
-      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      // Usuário atualiza o próprio doc (exceto role); admin atualiza qualquer campo
-      allow update: if isAuthenticated() && (
-        (isOwner(userId) && request.resource.data.role == resource.data.role) ||
-        isAdmin()
+      // Usuário só cria o próprio doc com privilégios zerados (role='user',
+      // nenhuma permissão habilitada); admin cria qualquer usuário com
+      // qualquer valor.
+      allow create: if isAdmin() || (isOwner(userId) && semPermissoesElevadas(request.resource.data));
+      // Usuário só pode alterar o próprio nome de exibição — role e todas as
+      // permissões (canAccess*) são exclusivas do admin. Antes só `role` era
+      // protegido; um usuário comum conseguia se autoconceder qualquer
+      // canAccess* chamando a API diretamente.
+      allow update: if isAdmin() || (
+        isOwner(userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName'])
       );
       allow delete: if isAdmin();
     }
 
     // ── Itens do Plano de Trabalho (orçamento) ──────────────────
     match /budgetItems/{itemId} {
-      allow read: if isAuthenticated();
+      // Dados do orçamento pertencem ao Acompanhamento Financeiro — mesma
+      // fronteira de confiança do ledger (ver abaixo).
+      allow read: if isAdmin() || hasPermission('canAccessEntry') || hasPermission('canAccessReport');
       allow create, update, delete: if isAdmin();
     }
 
@@ -48,26 +76,48 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ── Ledger ───────────────────────────────────────────────
+    // ── Ledger (Acompanhamento Financeiro) ──────────────────────
     match /ledger/{entryId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (isOwner(resource.data.authorUid) || isAdmin());
-      allow delete: if isAdmin();
-    }
+      // Leitura restrita a quem tem acesso ao módulo financeiro — dado
+      // sensível, não é aberto a qualquer autenticado (diferente das
+      // coleções de Monitoramento, cujo modelo de leitura ampla é
+      // preservado intencionalmente).
+      allow read: if isAdmin() || hasPermission('canAccessEntry') || hasPermission('canAccessReport');
 
-    // ── Audit ────────────────────────────────────────────────
-    match /audit/{logId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if false;
+      // Só quem tem "Novo Lançamento" (ou admin) cria, e a autoria gravada
+      // tem que ser o próprio usuário autenticado — impede que alguém crie
+      // um lançamento atribuído a outro uid.
+      allow create: if (isAdmin() || hasPermission('canAccessEntry')) &&
+        request.resource.data.authorUid == request.auth.uid;
+
+      // O dono só altera os campos operacionais do próprio lançamento.
+      // approvalStatus, authorUid e createdAt ficam fora da whitelist:
+      // sem isso, o próprio dono conseguiria aprovar/reprovar sua própria
+      // despesa ou forjar quem criou o registro, mesmo o client só chamando
+      // handleStatusChange/handleUpdateAuditComment quando isAdmin.
+      allow update: if isAdmin() || (
+        isOwner(resource.data.authorUid) &&
+        hasPermission('canAccessReport') &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'itemCode', 'nf', 'supplier', 'category', 'group', 'stage',
+          'documentName', 'documentData', 'description', 'amount', 'date',
+          'referenceMonth', 'auditComment', 'updatedAt'
+        ])
+      );
+
+      allow delete: if isAdmin();
     }
 
     // ── Monitor de Aprendizes — dimensão "Apuração Mensal" ──────
     // Metadados de cada período importado via CSV.
     match /periodos/{periodoId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin() || hasPermission('canAccessUpload');
+      allow create, update: if isAdmin() || hasPermission('canAccessUpload');
+      // Excluir um período é ação do Histórico, não do Upload — as duas
+      // são permissões distintas no client (canAccessHistorico x
+      // canAccessUpload); a regra antiga só aceitava canAccessUpload,
+      // quebrando quem tivesse só canAccessHistorico.
+      allow delete: if isAdmin() || hasPermission('canAccessUpload') || hasPermission('canAccessHistorico');
     }
 
     // Uma coleção por período, ex: colaboradores_2026_04. O Firestore não
@@ -76,8 +126,10 @@ service cloud.firestore {
     // pelo prefixo do nome dentro da condição.
     match /{collectionId}/{colaboradorId} {
       allow read: if collectionId.matches('colaboradores_.*') && isAuthenticated();
-      allow create, update, delete: if collectionId.matches('colaboradores_.*') &&
+      allow create, update: if collectionId.matches('colaboradores_.*') &&
         (isAdmin() || hasPermission('canAccessUpload'));
+      allow delete: if collectionId.matches('colaboradores_.*') &&
+        (isAdmin() || hasPermission('canAccessUpload') || hasPermission('canAccessHistorico'));
     }
 
     // ── Monitor de Aprendizes — dimensão "Monitoramento e Avaliação" ───
@@ -133,6 +185,11 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create, update: if isAdmin() || hasPermission('canAccessRelatorio');
       allow delete: if isAdmin();
+    }
+
+    // ── Fallback — nega por padrão qualquer coleção não listada acima ──
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
