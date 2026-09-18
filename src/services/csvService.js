@@ -23,17 +23,26 @@ export function getVRM(periodoISO) {
 // ============================================================
 // PARSE DO CSV
 // ============================================================
-export function parseCSV(file) {
+// Retorna também `errors` (linhas malformadas que o PapaParse já detecta
+// — antes eram descartadas silenciosamente) para a camada de validação
+// poder exibi-las, sem reprocessar o arquivo.
+export function parseCSVCompleto(file) {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       delimiter: '',
       encoding: 'UTF-8',
-      complete: (results) => resolve(results.data),
+      complete: (results) => resolve({ data: results.data, errors: results.errors || [], meta: results.meta }),
       error: (error) => reject(error)
     })
   })
+}
+
+// Mantido para compatibilidade — mesmo parse, só devolve as linhas.
+export async function parseCSV(file) {
+  const { data } = await parseCSVCompleto(file)
+  return data
 }
 
 // ============================================================

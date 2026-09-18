@@ -83,7 +83,13 @@ export const ApuracaoMensal: React.FC<ApuracaoMensalProps> = (props) => {
             </div>
           )}
 
-          {activeTab === 'upload' && <Upload showToast={showToast} />}
+          {activeTab === 'upload' && (
+            <Upload
+              onNavigate={(tab: ApuracaoTab) => setActiveTab(tab)}
+              canNavigateGerencial={visibleTabs.some(t => t.key === 'gerencial')}
+              canNavigateHistorico={visibleTabs.some(t => t.key === 'historico')}
+            />
+          )}
           {activeTab === 'gerencial' && <Gerencial />}
           {activeTab === 'repasse' && <Repasse />}
           {activeTab === 'historico' && <Historico showToast={showToast} />}
