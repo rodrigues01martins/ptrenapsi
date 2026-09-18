@@ -1,5 +1,5 @@
 import { db } from '../firebase'
-import { collection, addDoc, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, updateDoc, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore'
 
 // ============================================================
 // FORMULÁRIO DE VERIFICAÇÃO INICIAL DO APRENDIZ — 30 DIAS
@@ -210,14 +210,12 @@ function nomeColecao(periodo) {
   return 'verificacao30dias_' + periodo.replace('-', '_')
 }
 
-export async function salvarVerificacao30Dias(dadosFormulario, { uid, email }) {
-  const periodo = calcularPeriodoAplicacao(dadosFormulario.identificacao.dataAplicacao)
+function montarDocumento(dadosFormulario, periodo) {
   const diasTranscorridos = calcularDiasTranscorridos(
     dadosFormulario.identificacao.dataAdmissao,
     dadosFormulario.identificacao.dataAplicacao
   )
-
-  const documento = {
+  return {
     instrumentType: INSTRUMENT_TYPE,
     instrumentVersion: INSTRUMENT_VERSION,
     periodoAplicacao: periodo,
@@ -227,6 +225,28 @@ export async function salvarVerificacao30Dias(dadosFormulario, { uid, email }) {
     },
     respostas: dadosFormulario.respostas,
     observacao: dadosFormulario.observacao,
+  }
+}
+
+async function marcarPeriodoDisponivel(periodo) {
+  // Idempotente (não duplica a cada envio, ao contrário do padrão de
+  // "periodos" usado no CSV, que faz um addDoc por importação; aqui um
+  // doc por período basta, o total é sempre contado ao vivo na coleção
+  // real, nunca fica um contador defasado).
+  await setDoc(doc(db, 'verificacao30dias_periodos', periodo), { periodo }, { merge: true })
+}
+
+// Cria o rascunho a partir da primeira alteração relevante (identificação
+// completa) — dali em diante o autosave só atualiza este mesmo
+// documento. O período (e portanto a coleção) fica travado no valor de
+// dataAplicacao no momento desta primeira gravação; se o usuário mudar
+// a data de aplicação depois, o rascunho permanece na coleção original
+// (limitação aceita — ver relatório final).
+export async function criarRascunhoVerificacao30Dias(dadosFormulario, { uid, email }) {
+  const periodo = calcularPeriodoAplicacao(dadosFormulario.identificacao.dataAplicacao)
+  const documento = {
+    ...montarDocumento(dadosFormulario, periodo),
+    status: 'rascunho',
     metadata: {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -235,15 +255,47 @@ export async function salvarVerificacao30Dias(dadosFormulario, { uid, email }) {
       createdByEmail: email || null,
     },
   }
-
   const ref = await addDoc(collection(db, nomeColecao(periodo)), documento)
+  await marcarPeriodoDisponivel(periodo)
+  return { id: ref.id, periodo }
+}
 
-  // Metadado do período — idempotente (não duplica a cada envio, ao
-  // contrário do padrão de "periodos" usado no CSV, que faz um addDoc
-  // por importação; aqui um doc por período basta, o total é sempre
-  // contado ao vivo na coleção real, nunca fica um contador defasado).
-  await setDoc(doc(db, 'verificacao30dias_periodos', periodo), { periodo }, { merge: true })
+// Autosave de um rascunho já criado — nunca altera status nem os campos
+// de autoria (createdBy/createdAt).
+export async function atualizarRascunhoVerificacao30Dias(id, periodo, dadosFormulario) {
+  await updateDoc(doc(db, nomeColecao(periodo), id), {
+    ...montarDocumento(dadosFormulario, periodo),
+    'metadata.updatedAt': serverTimestamp(),
+  })
+}
 
+// Envio definitivo. Com rascunho autosalvo (id/periodo), promove o
+// MESMO documento para 'enviada' — não duplica. Sem rascunho prévio,
+// cria direto como enviada, igual ao comportamento anterior.
+export async function enviarVerificacao30Dias(idExistente, periodoExistente, dadosFormulario, { uid, email }) {
+  const periodo = periodoExistente || calcularPeriodoAplicacao(dadosFormulario.identificacao.dataAplicacao)
+  if (idExistente) {
+    await updateDoc(doc(db, nomeColecao(periodo), idExistente), {
+      ...montarDocumento(dadosFormulario, periodo),
+      status: 'enviada',
+      'metadata.updatedAt': serverTimestamp(),
+    })
+    await marcarPeriodoDisponivel(periodo)
+    return idExistente
+  }
+  const documento = {
+    ...montarDocumento(dadosFormulario, periodo),
+    status: 'enviada',
+    metadata: {
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      createdBy: uid || null,
+      updatedBy: uid || null,
+      createdByEmail: email || null,
+    },
+  }
+  const ref = await addDoc(collection(db, nomeColecao(periodo)), documento)
+  await marcarPeriodoDisponivel(periodo)
   return ref.id
 }
 

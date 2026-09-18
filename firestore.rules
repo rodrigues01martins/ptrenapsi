@@ -82,26 +82,56 @@ service cloud.firestore {
 
     // ── Monitor de Aprendizes — dimensão "Monitoramento e Avaliação" ───
     // Visitas de fiscalização in loco (Formulário + Painel Visita In Loco).
+    // O autosave do Formulário de Visita In Loco atualiza o próprio
+    // rascunho repetidas vezes antes do envio — por isso o autor pode
+    // dar update enquanto status ainda for 'rascunho' (nunca depois de
+    // 'enviada'), sem poder trocar de dono do documento.
     match /visitas_inloco/{visitaId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin() || hasPermission('canAccessEixo3');
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        hasPermission('canAccessEixo3') &&
+        resource.data.status == 'rascunho' &&
+        resource.data.criadoPorUid == request.auth.uid &&
+        request.resource.data.criadoPorUid == resource.data.criadoPorUid
+      );
+      allow delete: if isAdmin();
     }
 
     // Verificação Inicial do Aprendiz — 30 Dias. Uma coleção por período de
     // aplicação (verificacao30dias_aaaa_mm), mesmo motivo do curinga usado
-    // acima para colaboradores_*.
+    // acima para colaboradores_*. Mesmo raciocínio do autosave de
+    // visitas_inloco: o autor pode atualizar o próprio rascunho
+    // enquanto status == 'rascunho'.
     match /{collectionId}/{respostaId} {
       allow read: if collectionId.matches('verificacao30dias_[0-9]+_[0-9]+') && isAuthenticated();
       allow create: if collectionId.matches('verificacao30dias_[0-9]+_[0-9]+') &&
         (isAdmin() || hasPermission('canAccessFormulario30Dias'));
-      allow update, delete: if collectionId.matches('verificacao30dias_[0-9]+_[0-9]+') && isAdmin();
+      allow update: if collectionId.matches('verificacao30dias_[0-9]+_[0-9]+') && (
+        isAdmin() || (
+          hasPermission('canAccessFormulario30Dias') &&
+          resource.data.status == 'rascunho' &&
+          resource.data.metadata.createdBy == request.auth.uid &&
+          request.resource.data.metadata.createdBy == resource.data.metadata.createdBy
+        )
+      );
+      allow delete: if collectionId.matches('verificacao30dias_[0-9]+_[0-9]+') && isAdmin();
     }
 
     // Metadados de quais períodos têm formulários — um doc por período.
     match /verificacao30dias_periodos/{periodoId} {
       allow read: if isAuthenticated();
       allow create, update: if isAdmin() || hasPermission('canAccessFormulario30Dias');
+      allow delete: if isAdmin();
+    }
+
+    // Rascunho do Relatório Final — documento único e compartilhado
+    // ('atual'), como settings/partnership, mas com permissão de escrita
+    // para quem tem acesso à aba (não só admin), pois o conteúdo do
+    // relatório em si é preenchido por quem tem canAccessRelatorio.
+    match /relatorioFinalRascunho/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() || hasPermission('canAccessRelatorio');
       allow delete: if isAdmin();
     }
   }

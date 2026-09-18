@@ -1,5 +1,5 @@
 import { db } from '../firebase'
-import { collection, addDoc, getDocs, doc, getDoc } from 'firebase/firestore'
+import { collection, addDoc, updateDoc, getDocs, doc, getDoc } from 'firebase/firestore'
 
 // ============================================================
 // FORMULÁRIO DE FISCALIZAÇÃO IN LOCO — configuração e cálculo
@@ -140,17 +140,61 @@ export function validarRespostasCompletas(respostas) {
 // ------------------------------------------------------------
 const COLECAO = 'visitas_inloco'
 
-export async function salvarVisita(visita, { status, uid, email }) {
+// Cria o rascunho a partir da primeira alteração relevante (cabeçalho
+// mínimo preenchido) — dali em diante o autosave só atualiza este
+// mesmo documento (ver atualizarRascunhoVisita), nunca cria outro.
+export async function criarRascunhoVisita(visita, { uid, email }) {
   const calculo = calcularPontuacao(visita.respostas)
+  const agora = new Date().toISOString()
   const doc_ = {
     ...visita,
     ...calculo,
-    status, // 'rascunho' | 'enviada'
-    criadoEm: new Date().toISOString(),
+    status: 'rascunho',
+    criadoEm: agora,
+    atualizadoEm: agora,
     criadoPorUid: uid || null,
     criadoPorEmail: email || null,
   }
   const ref = await addDoc(collection(db, COLECAO), doc_)
+  return ref.id
+}
+
+// Autosave de um rascunho já criado — nunca altera status nem os
+// campos de autoria.
+export async function atualizarRascunhoVisita(id, visita) {
+  const calculo = calcularPontuacao(visita.respostas)
+  await updateDoc(doc(db, COLECAO, id), {
+    ...visita,
+    ...calculo,
+    atualizadoEm: new Date().toISOString(),
+  })
+}
+
+// Envio definitivo. Se já existir um rascunho autosalvo (id), promove o
+// MESMO documento para 'enviada' — não duplica. Sem rascunho prévio
+// (autosave nunca chegou a disparar), cria direto como enviada, igual
+// ao comportamento anterior.
+export async function enviarVisita(id, visita, { uid, email }) {
+  const calculo = calcularPontuacao(visita.respostas)
+  const agora = new Date().toISOString()
+  if (id) {
+    await updateDoc(doc(db, COLECAO, id), {
+      ...visita,
+      ...calculo,
+      status: 'enviada',
+      atualizadoEm: agora,
+    })
+    return id
+  }
+  const ref = await addDoc(collection(db, COLECAO), {
+    ...visita,
+    ...calculo,
+    status: 'enviada',
+    criadoEm: agora,
+    atualizadoEm: agora,
+    criadoPorUid: uid || null,
+    criadoPorEmail: email || null,
+  })
   return ref.id
 }
 

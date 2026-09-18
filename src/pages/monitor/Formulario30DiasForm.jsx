@@ -1,15 +1,19 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { auth } from '../../firebase'
 import Button from '../../components/monitor/ui/Button'
 import Badge from '../../components/monitor/ui/Badge'
 import { Input, Select } from '../../components/monitor/ui/Input'
+import AutosaveStatus from '../../components/monitor/ui/AutosaveStatus'
+import { useAutosave } from '../../hooks/useAutosave'
 import { COORDS_GOIAS } from '../../components/monitor/coordsGoias'
 import {
   QUESTION_DEFINITIONS,
   isApplicable,
   validarRespostasCompletas,
   calcularDiasTranscorridos,
-  salvarVerificacao30Dias,
+  criarRascunhoVerificacao30Dias,
+  atualizarRascunhoVerificacao30Dias,
+  enviarVerificacao30Dias,
 } from '../../services/verificacao30DiasService'
 
 const MUNICIPIOS = Object.keys(COORDS_GOIAS).sort((a, b) => a.localeCompare(b, 'pt-BR'))
@@ -131,12 +135,35 @@ export default function Formulario30DiasForm({ showToast }) {
   const [salvando, setSalvando] = useState(false)
   const [tentouEnviar, setTentouEnviar] = useState(false)
 
+  const draftRef = useRef({ id: null, periodo: null })
+
   const diasTranscorridos = calcularDiasTranscorridos(identificacao.dataAdmissao, identificacao.dataAplicacao)
   const completo = validarRespostasCompletas(respostas)
   const identificacaoCompleta = !!(
     identificacao.matricula && identificacao.municipioNome &&
     identificacao.orgaoBeneficiarioNome && identificacao.dataAdmissao && identificacao.dataAplicacao
   )
+
+  const saveDraft = useCallback(async (dados) => {
+    if (!dados) return
+    if (draftRef.current.id) {
+      await atualizarRascunhoVerificacao30Dias(draftRef.current.id, draftRef.current.periodo, dados)
+    } else {
+      const { id, periodo } = await criarRascunhoVerificacao30Dias(dados, { uid: auth.currentUser?.uid, email: auth.currentUser?.email })
+      draftRef.current = { id, periodo }
+    }
+  }, [])
+
+  const autosave = useAutosave(saveDraft, { delay: 2000, enabled: identificacaoCompleta })
+
+  useEffect(() => {
+    autosave.notifyChange({
+      identificacao,
+      respostas,
+      observacao: { possuiObservacao: possuiObservacao === 'SIM', texto: possuiObservacao === 'SIM' ? textoObservacao.trim() : '' },
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identificacao, respostas, possuiObservacao, textoObservacao])
 
   function atualizarIdentificacao(campo, valor) {
     setIdentificacao(i => ({ ...i, [campo]: valor }))
@@ -161,6 +188,8 @@ export default function Formulario30DiasForm({ showToast }) {
     setTextoObservacao('')
     setConfirmando(false)
     setTentouEnviar(false)
+    draftRef.current = { id: null, periodo: null }
+    autosave.reset()
   }
 
   function handlePedirConfirmacao() {
@@ -184,7 +213,12 @@ export default function Formulario30DiasForm({ showToast }) {
   async function handleEnviar() {
     setSalvando(true)
     try {
-      await salvarVerificacao30Dias(
+      // Promove o próprio rascunho autosalvo para 'enviada' (não
+      // duplica documento); sem rascunho prévio, cria direto como
+      // enviada — mesmo resultado de antes.
+      await enviarVerificacao30Dias(
+        draftRef.current.id,
+        draftRef.current.periodo,
         {
           identificacao,
           respostas,
@@ -211,6 +245,9 @@ export default function Formulario30DiasForm({ showToast }) {
         <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px', fontFamily: 'var(--font-family)', maxWidth: '720px' }}>
           Instrumento de coleta de dados para monitoramento das condições iniciais de ingresso e execução do Programa Aprendiz do Futuro.
         </p>
+        <div style={{ marginTop: '8px' }}>
+          <AutosaveStatus status={autosave.status} lastSavedAt={autosave.lastSavedAt} onRetry={() => autosave.saveNow()} />
+        </div>
       </div>
 
       {/* ── Identificação ── */}

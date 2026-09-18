@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { auth } from '../../firebase'
 import Button from '../../components/monitor/ui/Button'
 import { Input, Select } from '../../components/monitor/ui/Input'
+import AutosaveStatus from '../../components/monitor/ui/AutosaveStatus'
+import { useAutosave } from '../../hooks/useAutosave'
 import { COORDS_GOIAS } from '../../components/monitor/coordsGoias'
 import {
   BLOCOS,
@@ -10,7 +12,9 @@ import {
   calcularSemestre,
   calcularPontuacao,
   validarRespostasCompletas,
-  salvarVisita,
+  criarRascunhoVisita,
+  atualizarRascunhoVisita,
+  enviarVisita,
 } from '../../services/inLocoService'
 
 const MUNICIPIOS = Object.keys(COORDS_GOIAS).sort((a, b) => a.localeCompare(b, 'pt-BR'))
@@ -134,9 +138,35 @@ export default function VisitaInLocoForm({ showToast }) {
   const [respostas, setRespostas] = useState({})
   const [salvando, setSalvando] = useState(null) // 'rascunho' | 'enviada' | null
   const [tentouEnviar, setTentouEnviar] = useState(false)
+  const draftIdRef = useRef(null)
 
   const calculo = calcularPontuacao(respostas)
   const completo = validarRespostasCompletas(respostas)
+
+  // Cabeçalho mínimo já exigido hoje pelo botão "Salvar Rascunho" —
+  // reaproveitado como gatilho de quando o autosave pode começar a
+  // existir como documento (evita rascunhos vazios criados só porque a
+  // página foi aberta).
+  const cabecalhoMinimoCompleto = !!(
+    cabecalho.municipio && cabecalho.nome_local && cabecalho.responsavel_visita && cabecalho.representante_osc
+  )
+
+  const saveDraft = useCallback(async (dados) => {
+    if (!dados) return
+    if (draftIdRef.current) {
+      await atualizarRascunhoVisita(draftIdRef.current, dados)
+    } else {
+      const id = await criarRascunhoVisita(dados, { uid: auth.currentUser?.uid, email: auth.currentUser?.email })
+      draftIdRef.current = id
+    }
+  }, [])
+
+  const autosave = useAutosave(saveDraft, { delay: 2000, enabled: cabecalhoMinimoCompleto })
+
+  useEffect(() => {
+    autosave.notifyChange({ ...cabecalho, respostas })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cabecalho, respostas])
 
   function atualizarCabecalho(campo, valor) {
     setCabecalho(c => {
@@ -168,27 +198,54 @@ export default function VisitaInLocoForm({ showToast }) {
     setCabecalho(cabecalhoInicial())
     setRespostas({})
     setTentouEnviar(false)
+    draftIdRef.current = null
+    autosave.reset()
   }
 
-  async function handleSalvar(status) {
-    if (!cabecalho.municipio || !cabecalho.nome_local || !cabecalho.responsavel_visita || !cabecalho.representante_osc) {
+  // Salvar Rascunho manual: continua útil como ação explícita — força a
+  // persistência imediata (equivalente a saveNow) em vez de esperar o
+  // debounce. Diferente de antes, NÃO limpa mais o formulário: agora o
+  // rascunho é um documento vivo que o autosave continua atualizando.
+  async function handleSalvarRascunho() {
+    if (!cabecalhoMinimoCompleto) {
       setTentouEnviar(true)
       showToast?.('Preencha os campos obrigatórios do cabeçalho antes de salvar.')
       return
     }
-    if (status === 'enviada' && !completo) {
+    setSalvando('rascunho')
+    try {
+      await autosave.saveNow({ ...cabecalho, respostas })
+      showToast?.('Rascunho salvo com sucesso!')
+    } catch (e) {
+      showToast?.('Erro ao salvar: ' + e.message)
+    } finally {
+      setSalvando(null)
+    }
+  }
+
+  async function handleEnviar() {
+    if (!cabecalhoMinimoCompleto) {
+      setTentouEnviar(true)
+      showToast?.('Preencha os campos obrigatórios do cabeçalho antes de salvar.')
+      return
+    }
+    if (!completo) {
       setTentouEnviar(true)
       showToast?.('Responda todos os 21 itens antes de enviar a visita.')
       return
     }
 
-    setSalvando(status)
+    setSalvando('enviada')
     try {
-      await salvarVisita(
+      // Promove o próprio rascunho autosalvo para 'enviada' (não
+      // duplica documento); sem rascunho prévio, cria direto como
+      // enviada — mesmo resultado de antes.
+      await enviarVisita(
+        draftIdRef.current,
         { ...cabecalho, respostas },
-        { status, uid: auth.currentUser?.uid, email: auth.currentUser?.email }
+        { uid: auth.currentUser?.uid, email: auth.currentUser?.email }
       )
-      showToast?.(status === 'enviada' ? 'Visita enviada com sucesso!' : 'Rascunho salvo com sucesso!')
+      showToast?.('Visita enviada com sucesso!')
       resetarFormulario()
     } catch (e) {
       showToast?.('Erro ao salvar: ' + e.message)
@@ -296,12 +353,15 @@ export default function VisitaInLocoForm({ showToast }) {
           <p style={{ fontSize: '22px', fontWeight: 700, color: 'var(--brand-primary)', fontFamily: 'var(--font-family)' }}>
             {calculo.pontuacaoTotal} / {PONTUACAO_MAXIMA} <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>({calculo.icl.toFixed(1)}%)</span>
           </p>
+          <div style={{ marginTop: '4px' }}>
+            <AutosaveStatus status={autosave.status} lastSavedAt={autosave.lastSavedAt} onRetry={() => autosave.saveNow()} />
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <Button variant="secondary" onClick={() => handleSalvar('rascunho')} loading={salvando === 'rascunho'} disabled={salvando !== null}>
+          <Button variant="secondary" onClick={handleSalvarRascunho} loading={salvando === 'rascunho'} disabled={salvando !== null}>
             Salvar Rascunho
           </Button>
-          <Button variant="primary" onClick={() => handleSalvar('enviada')} loading={salvando === 'enviada'} disabled={salvando !== null}>
+          <Button variant="primary" onClick={handleEnviar} loading={salvando === 'enviada'} disabled={salvando !== null}>
             Enviar Visita
           </Button>
         </div>

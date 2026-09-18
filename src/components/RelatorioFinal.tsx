@@ -1,8 +1,15 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../firebase';
 import { ChevronLeft, ChevronRight, Download, Upload, Printer, ArrowLeft, CheckSquare, Square, Save } from 'lucide-react';
 import { PartnershipSettings } from '../types';
+import { useAutosave } from '../hooks/useAutosave';
+import AutosaveStatus from './monitor/ui/AutosaveStatus';
+
+// Documento único e compartilhado (não é por usuário — é o mesmo
+// Relatório Final institucional que qualquer pessoa com acesso pode
+// continuar preenchendo, igual a settings/partnership).
+const RASCUNHO_REF = () => doc(db, 'relatorioFinalRascunho', 'atual');
 
 interface RelatorioFinalProps {
   isAdmin: boolean;
@@ -684,18 +691,66 @@ export default function RelatorioFinal({ isAdmin, showToast }: RelatorioFinalPro
   const [state, setState] = useState<AppState>(() => buildInitialState(DEFAULT_PARTNERSHIP));
   const [currentStep, setCurrentStep] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [rascunhoInfo, setRascunhoInfo] = useState<{ updatedAt: Date | null; updatedByEmail: string | null } | null>(null);
   const set = useCallback((fn: (p: AppState) => AppState) => setState(fn), []);
 
+  // Carrega a parceria (já existia) e, em seguida, o rascunho do
+  // Relatório Final em si (novo — antes o conteúdo do relatório só
+  // existia em memória/export .json manual, nunca no Firestore).
   useEffect(() => {
-    getDoc(doc(db, 'settings', 'partnership')).then(snap => {
+    getDoc(doc(db, 'settings', 'partnership')).then(async snap => {
+      let loaded = DEFAULT_PARTNERSHIP;
       if (snap.exists()) {
-        const loaded = { ...DEFAULT_PARTNERSHIP, ...snap.data() } as PartnershipSettings;
+        loaded = { ...DEFAULT_PARTNERSHIP, ...snap.data() } as PartnershipSettings;
         setPartnership(loaded);
-        setState(buildInitialState(loaded));
       }
+      let estadoInicial = buildInitialState(loaded);
+      try {
+        const rascunhoSnap = await getDoc(RASCUNHO_REF());
+        if (rascunhoSnap.exists()) {
+          const dados = rascunhoSnap.data();
+          if (dados.state) estadoInicial = { ...estadoInicial, ...dados.state };
+          setRascunhoInfo({
+            updatedAt: dados.updatedAt?.toDate ? dados.updatedAt.toDate() : null,
+            updatedByEmail: dados.updatedByEmail || null,
+          });
+        }
+      } catch {
+        // Sem rascunho anterior ou sem acesso de leitura — segue com o
+        // estado inicial derivado só da parceria, como antes.
+      }
+      setState(estadoInicial);
       setLoadingSettings(false);
-    }).catch(() => setLoadingSettings(false));
+      setHydrated(true);
+    }).catch(() => { setLoadingSettings(false); setHydrated(true); });
   }, []);
+
+  const saveDraft = useCallback(async (dados: AppState) => {
+    await setDoc(RASCUNHO_REF(), {
+      state: dados,
+      updatedAt: serverTimestamp(),
+      updatedBy: auth.currentUser?.uid || null,
+      updatedByEmail: auth.currentUser?.email || null,
+    }, { merge: true });
+  }, []);
+
+  const autosave = useAutosave(saveDraft, { delay: 2500, enabled: hydrated });
+
+  useEffect(() => {
+    if (!hydrated) return;
+    autosave.notifyChange(state);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, hydrated]);
+
+  // Flush imediato antes de trocar de etapa — não deixa o debounce
+  // pendente atravessar a transição (o conteúdo em si não muda com a
+  // troca de etapa, mas garante que a última tecla antes do clique
+  // também seja persistida sem esperar os ~2,5s do debounce).
+  function irParaEtapa(i: number) {
+    autosave.saveNow(state);
+    setCurrentStep(i);
+  }
 
   const handleSavePartnership = async () => {
     setSaving(true);
@@ -784,7 +839,7 @@ export default function RelatorioFinal({ isAdmin, showToast }: RelatorioFinalPro
             const done = isStepFilled(state, s.id);
             const active = i === currentStep;
             return (
-              <button key={s.id} onClick={()=>setCurrentStep(i)}
+              <button key={s.id} onClick={()=>irParaEtapa(i)}
                 className={`w-full flex items-start gap-2.5 px-3 py-2 rounded-xl mb-0.5 text-left transition-all ${active ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-white/70'}`}>
                 <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[9px] flex-shrink-0 mt-0.5 font-bold
                   ${done ? 'bg-[#FCD951] border-[#FCD951] text-[#007770]' : active ? 'border-white text-white' : 'border-white/30 text-white/40'}`}>
@@ -810,16 +865,25 @@ export default function RelatorioFinal({ isAdmin, showToast }: RelatorioFinalPro
 
       {/* ── Conteúdo principal ── */}
       <main className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+          {rascunhoInfo?.updatedAt ? (
+            <p className="text-xs text-slate-400">
+              Rascunho — última atualização em {rascunhoInfo.updatedAt.toLocaleDateString('pt-BR')} às {rascunhoInfo.updatedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              {rascunhoInfo.updatedByEmail ? ` · ${rascunhoInfo.updatedByEmail}` : ''}
+            </p>
+          ) : <span />}
+          <AutosaveStatus status={autosave.status} lastSavedAt={autosave.lastSavedAt} onRetry={() => autosave.saveNow(state)} />
+        </div>
         {renderSection()}
 
         {/* Navegação */}
         {STEPS[currentStep].id !== 'anexos' && (
           <div className="flex justify-between mt-8 pt-6 border-t border-slate-200">
-            <button onClick={()=>setCurrentStep(i=>Math.max(0,i-1))} disabled={currentStep===0}
+            <button onClick={()=>irParaEtapa(Math.max(0,currentStep-1))} disabled={currentStep===0}
               className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
               <ChevronLeft size={16}/> Voltar
             </button>
-            <button onClick={()=>setCurrentStep(i=>Math.min(STEPS.length-1,i+1))}
+            <button onClick={()=>irParaEtapa(Math.min(STEPS.length-1,currentStep+1))}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#007770] text-white font-bold rounded-xl hover:bg-[#005f59] transition-all text-sm shadow-lg">
               Continuar <ChevronRight size={16}/>
             </button>

@@ -70,7 +70,11 @@ export default function Painel30Dias() {
     if (!periodoSel) return
     setLoadingPeriodo(true)
     buscarRespostasPeriodo(periodoSel).then(lista => {
-      setRespostas(lista)
+      // Rascunhos autosalvos (ainda não enviados) não entram nas
+      // estatísticas — só respostas concluídas. Documentos antigos sem
+      // o campo `status` são de antes do autosave existir: já eram
+      // envios concluídos, então continuam contados normalmente.
+      setRespostas(lista.filter(r => r.status !== 'rascunho'))
       setLoadingPeriodo(false)
     })
   }, [periodoSel])
