@@ -17,6 +17,7 @@ import { ApuracaoMensal } from './components/ApuracaoMensal';
 import { MonitoramentoAvaliacao } from './components/MonitoramentoAvaliacao';
 import { BudgetItem, LedgerEntry } from './types';
 import { UserManagement } from './components/UserManagement';
+import { getSpentForItem as calcSpentForItem } from './lib/utils';
 
 type FinanceiroTab = 'entry' | 'despesas' | 'report' | 'itens' | 'gestao';
 
@@ -532,11 +533,7 @@ export function App() {
           entry={editingEntry}
           budgetItems={budgetItems}
           onSave={handleUpdateEntry}
-          getSpentForItem={(code, id) =>
-            ledgerEntries
-              .filter(e => e.itemCode === code && e.id !== id)
-              .reduce((acc, e) => acc + e.amount, 0)
-          }
+          getSpentForItem={(code, id) => calcSpentForItem(ledgerEntries, code, id)}
         />
       )}
       <Toast message={toast.message} isVisible={toast.isVisible} />

@@ -1,14 +1,30 @@
 import React, { useState } from 'react';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { ClipboardList, Edit, Trash2, FileWarning } from 'lucide-react';
 import { BudgetItem, LedgerEntry } from '../types';
-import { formatDateForSort } from '../lib/utils';
+import { fmt, formatDateForSort, getSpentForItem } from '../lib/utils';
+import { PageHeader } from './ui/PageHeader';
+import { KpiCard } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { TextInput, Select } from './ui/FormField';
+import { Button } from './ui/Button';
+import { EmptyState } from './ui/EmptyState';
+import { DespesaDetail, STATUS_META } from './DespesaDetail';
+
+// "Acompanhar Despesa" — fila de despesas para análise do Auditor.
+// A lista serve só para localizar o registro (Documento/Fornecedor/
+// Item/Data/Valor/Situação); dados completos, contexto do Plano de
+// Trabalho, documento e a análise (situação + manifestação) ficam no
+// modal DespesaDetail, aberto por linha/ação "Analisar".
+
+type Status = LedgerEntry['approvalStatus'];
+const ALL_STATUSES: Status[] = ['Em analise', 'Pendente', 'Aprovado', 'Desaprovado'];
 
 interface LedgerProps {
   entries: LedgerEntry[];
   budgetItems: BudgetItem[];
   onEdit: (entry: LedgerEntry) => void;
   onDelete: (id: string) => void;
-  onStatusChange: (id: string, status: LedgerEntry['approvalStatus']) => void;
+  onStatusChange: (id: string, status: Status) => void;
   onUpdateComment?: (id: string, comment: string) => void;
   canDelete: boolean;
   isAdmin: boolean;
@@ -20,23 +36,50 @@ export function Ledger({
   onEdit,
   onDelete,
   onStatusChange,
+  onUpdateComment,
   canDelete,
   isAdmin,
 }: LedgerProps) {
+  const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterItemCode, setFilterItemCode] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [sortMode, setSortMode] = useState('desc');
-  const [filterStatus, setFilterStatus] = useState<string>('Todos');
+  const [filterStatus, setFilterStatus] = useState<Status | 'Todos'>('Todos');
+  const [analysingEntryId, setAnalysingEntryId] = useState<string | null>(null);
+  // Deriva da lista viva (não guarda a entrada em si): assim o modal
+  // sempre reflete o status/comentário mais recentes vindos do Firestore,
+  // inclusive logo após salvar a própria análise.
+  const analysingEntry = analysingEntryId ? entries.find(e => e.id === analysingEntryId) || null : null;
 
   const categories = [...new Set(budgetItems.map(i => i.category))];
 
-  const filtered = entries
-    .filter(e => {
-      const matchCategory = !filterCategory || e.category === filterCategory;
-      const matchStatus = filterStatus === 'Todos' || e.approvalStatus === filterStatus;
-      const matchItem = !filterItemCode || e.itemCode === filterItemCode;
-      return matchCategory && matchStatus && matchItem;
-    })
+  const hasFilters = !!(search || filterCategory || filterItemCode || dateFrom || dateTo || filterStatus !== 'Todos');
+
+  // Filtros aplicados exceto situação — usados para os contadores do
+  // resumo operacional, que também funcionam como atalho de filtro.
+  const baseFiltered = entries.filter(e => {
+    const q = search.trim().toLowerCase();
+    const matchSearch = !q ||
+      (e.supplier || '').toLowerCase().includes(q) ||
+      (e.nf || '').toLowerCase().includes(q) ||
+      (e.description || '').toLowerCase().includes(q);
+    const matchCategory = !filterCategory || e.category === filterCategory;
+    const matchItem = !filterItemCode || e.itemCode === filterItemCode;
+    const ts = formatDateForSort(e.date);
+    const matchFrom = !dateFrom || ts >= new Date(dateFrom).getTime();
+    const matchTo = !dateTo || ts <= new Date(dateTo).getTime() + 86400000 - 1;
+    return matchSearch && matchCategory && matchItem && matchFrom && matchTo;
+  });
+
+  const counts = ALL_STATUSES.reduce((acc, s) => {
+    acc[s] = baseFiltered.filter(e => e.approvalStatus === s).length;
+    return acc;
+  }, {} as Record<Status, number>);
+
+  const filtered = baseFiltered
+    .filter(e => filterStatus === 'Todos' || e.approvalStatus === filterStatus)
     .sort((a, b) => {
       if (sortMode === 'asc') return formatDateForSort(a.date) - formatDateForSort(b.date);
       if (sortMode === 'amount_desc') return b.amount - a.amount;
@@ -44,210 +87,196 @@ export function Ledger({
       return formatDateForSort(b.date) - formatDateForSort(a.date);
     });
 
-  const openDocument = (data: string) => {
-    try {
-      if (data.startsWith('data:application/pdf;base64,')) {
-        const base64Content = data.split(',')[1];
-        const byteCharacters = atob(base64Content);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++)
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
-        window.open(URL.createObjectURL(blob), '_blank');
-      } else {
-        window.open(data, '_blank');
-      }
-    } catch {
-      alert('Não foi possível abrir o PDF.');
-    }
-  };
+  const analysingBudgetItem = analysingEntry ? budgetItems.find(i => i.id === analysingEntry.itemCode) : undefined;
+  const analysingSpentBefore = analysingEntry ? getSpentForItem(entries, analysingEntry.itemCode, analysingEntry.id) : 0;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <div className="space-y-6">
+      <PageHeader
+        icon={<ClipboardList size={28} />}
+        title="Acompanhar Despesa"
+        description="Consulte e analise as despesas registradas no projeto."
+      />
 
-      {/* ── Cabeçalho ── */}
-      <div className="px-6 pt-5 pb-4 border-b border-slate-100 bg-slate-50/30">
-        <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">
-          Acompanhar Despesa
-        </h3>
+      {/* ── Resumo operacional — dobra como atalho de filtro por situação ── */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <KpiCard
+          compact
+          label="Total de despesas"
+          value={baseFiltered.length}
+          selected={filterStatus === 'Todos'}
+          onClick={() => setFilterStatus('Todos')}
+        />
+        {ALL_STATUSES.map(s => (
+          <KpiCard
+            key={s}
+            compact
+            label={STATUS_META[s].label}
+            value={counts[s]}
+            tone={s === 'Aprovado' ? 'success' : s === 'Desaprovado' ? 'danger' : s === 'Pendente' ? 'warning' : 'neutral'}
+            selected={filterStatus === s}
+            onClick={() => setFilterStatus(s)}
+          />
+        ))}
+      </div>
 
-        {/* ── Barra única de filtros ── */}
-        <div className="flex flex-wrap items-center gap-2">
-
-          {/* Categoria */}
-          <select
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#007770] min-w-[150px]"
-            value={filterCategory}
-            onChange={e => { setFilterCategory(e.target.value); setFilterItemCode(''); }}
-          >
-            <option value="">Todas as Categorias</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-
-          {/* Item do plano */}
-          <select
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#007770] min-w-[220px] flex-1 max-w-xs"
-            value={filterItemCode}
-            onChange={e => setFilterItemCode(e.target.value)}
-          >
-            <option value="">Todos os Itens do Plano</option>
-            {budgetItems
-              .filter(item => !filterCategory || item.category === filterCategory)
-              .map(item => (
-                <option key={item.id} value={item.id}>
-                  {item.id} — {item.desc.length > 40 ? item.desc.slice(0, 40) + '…' : item.desc}
-                </option>
-              ))}
-          </select>
-
-          {/* Ordenação */}
-          <select
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#007770]"
-            value={sortMode}
-            onChange={e => setSortMode(e.target.value)}
-          >
-            <option value="desc">Mais Recentes</option>
-            <option value="asc">Mais Antigos</option>
-            <option value="amount_desc">Maior Valor</option>
-            <option value="amount_asc">Menor Valor</option>
-          </select>
-
-          {/* Divisor visual */}
-          <div className="hidden md:block h-6 w-px bg-slate-200 mx-1" />
-
-          {/* Botões de status — mesma linha */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">
-              Status:
-            </span>
-            {['Todos', 'Em analise', 'Pendente', 'Aprovado', 'Desaprovado'].map(status => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border whitespace-nowrap ${
-                  filterStatus === status
-                    ? 'bg-[#007770] text-white border-[#007770] shadow-sm'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#007770]'
-                }`}
-              >
-                {status}
-              </button>
-            ))}
+      {/* ── Filtros ── */}
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[220px]">
+            <TextInput
+              label="Buscar"
+              placeholder="Fornecedor, NF ou descrição..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
           </div>
 
-          {/* Contador — empurrado para a direita */}
-          <span className="ml-auto text-[11px] text-slate-400 font-semibold whitespace-nowrap">
+          <div className="min-w-[170px]">
+            <Select
+              label="Categoria"
+              value={filterCategory}
+              onChange={e => { setFilterCategory(e.target.value); setFilterItemCode(''); }}
+            >
+              <option value="">Todas</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </Select>
+          </div>
+
+          <div className="min-w-[200px] flex-1 max-w-xs">
+            <Select
+              label="Item do Plano"
+              value={filterItemCode}
+              onChange={e => setFilterItemCode(e.target.value)}
+            >
+              <option value="">Todos</option>
+              {budgetItems
+                .filter(item => !filterCategory || item.category === filterCategory)
+                .map(item => (
+                  <option key={item.id} value={item.id}>
+                    {item.id} — {item.desc.length > 40 ? item.desc.slice(0, 40) + '…' : item.desc}
+                  </option>
+                ))}
+            </Select>
+          </div>
+
+          <div className="min-w-[140px]">
+            <TextInput label="De" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+          </div>
+          <div className="min-w-[140px]">
+            <TextInput label="Até" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+          </div>
+
+          <div className="min-w-[160px]">
+            <Select label="Ordenar por" value={sortMode} onChange={e => setSortMode(e.target.value)}>
+              <option value="desc">Mais recentes</option>
+              <option value="asc">Mais antigos</option>
+              <option value="amount_desc">Maior valor</option>
+              <option value="amount_asc">Menor valor</option>
+            </Select>
+          </div>
+
+          <span className="text-[11px] text-slate-400 font-semibold whitespace-nowrap pb-3 ml-auto">
             {filtered.length} registro{filtered.length !== 1 ? 's' : ''}
           </span>
-
         </div>
       </div>
 
-      {/* ── Tabela ── */}
-      <div className="overflow-x-auto max-h-[500px]">
-        <table className="w-full text-left text-sm border-collapse">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/50 sticky top-0 z-10">
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Data</th>
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Item PT</th>
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase">Categoria</th>
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase">Descrição</th>
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Fornecedor</th>
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right whitespace-nowrap">Valor</th>
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase text-center whitespace-nowrap">Status</th>
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase text-center">Doc.</th>
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase text-center">Editar</th>
-              <th className="p-4 text-xs font-bold text-slate-500 uppercase text-center">Excluir</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="p-8 text-center text-slate-400 text-sm">
-                  Nenhum registro encontrado para os filtros selecionados.
-                </td>
-              </tr>
-            ) : (
-              filtered.map(entry => (
-                <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <td className="p-4 text-sm text-slate-600 whitespace-nowrap">{entry.date}</td>
-                  <td className="p-4 whitespace-nowrap">
-                    <span className="px-2 py-1 rounded-md bg-[#007770]/10 text-[#007770] text-[11px] font-bold">
-                      {entry.itemCode}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold">
-                      {entry.category}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-slate-600 italic truncate max-w-[150px]" title={entry.description}>
-                    {entry.description || '-'}
-                  </td>
-                  <td className="p-4 text-sm font-medium text-slate-700 whitespace-nowrap">
-                    {entry.supplier || '-'}
-                  </td>
-                  <td className="p-4 text-right font-bold text-slate-900 whitespace-nowrap">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}
-                  </td>
-                  <td className="p-4 text-center">
-                    <select
-                      disabled={!isAdmin}
-                      value={entry.approvalStatus || 'Em analise'}
-                      onChange={e => onStatusChange(entry.id, e.target.value as LedgerEntry['approvalStatus'])}
-                      className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
-                        entry.approvalStatus === 'Aprovado'
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : entry.approvalStatus === 'Desaprovado'
-                          ? 'bg-red-50 text-red-700 border-red-200'
-                          : entry.approvalStatus === 'Pendente'
-                          ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                          : 'bg-slate-100 text-slate-600 border-slate-300'
-                      } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <option value="Em analise">Em analise</option>
-                      <option value="Pendente">Pendente</option>
-                      <option value="Aprovado">Aprovado</option>
-                      <option value="Desaprovado">Desaprovado</option>
-                    </select>
-                  </td>
-                  <td className="p-4 text-center">
-                    {entry.documentData && (
-                      <button
-                        className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
-                        onClick={() => openDocument(entry.documentData!)}
-                        title="Ver Documento"
-                      >
-                        <Eye size={14} />
-                      </button>
-                    )}
-                  </td>
-                  <td className="p-4 text-center">
-                    <button
-                      className="p-2 text-slate-400 hover:text-[#007770] transition-colors"
-                      onClick={() => onEdit(entry)}
-                      title="Editar"
-                    >
-                      <Edit size={14} />
-                    </button>
-                  </td>
-                  <td className="p-4 text-center">
-                    {canDelete && (
-                      <button
-                        className="p-2 text-slate-400 hover:text-red-600 transition-colors"
-                        onClick={() => onDelete(entry.id)}
-                        title="Excluir"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </td>
+      {/* ── Lista / fila de despesas ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={<FileWarning size={32} />}
+            title={
+              entries.length === 0
+                ? 'Nenhuma despesa encontrada.'
+                : filterStatus !== 'Todos'
+                ? `Nenhuma despesa com situação "${STATUS_META[filterStatus].label}" no momento.`
+                : 'Nenhuma despesa corresponde aos filtros aplicados.'
+            }
+            description={
+              entries.length === 0
+                ? 'As despesas aparecerão aqui após o registro em "Novo Lançamento".'
+                : hasFilters
+                ? 'Tente ajustar ou limpar os filtros para ver outros registros.'
+                : undefined
+            }
+          />
+        ) : (
+          <div className="overflow-x-auto max-h-[600px]">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/50 sticky top-0 z-10">
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Documento</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Fornecedor</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Item PT</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">Data</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right whitespace-nowrap">Valor</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase text-center whitespace-nowrap">Situação</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase text-center whitespace-nowrap">Ações</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map(entry => {
+                  const meta = STATUS_META[entry.approvalStatus] || STATUS_META['Em analise'];
+                  return (
+                    <tr
+                      key={entry.id}
+                      className="border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
+                      onClick={() => setAnalysingEntryId(entry.id)}
+                    >
+                      <td className="p-4">
+                        <p className="text-sm font-bold text-slate-800 whitespace-nowrap">{entry.nf || '—'}</p>
+                        {entry.description && (
+                          <p className="text-xs text-slate-400 truncate max-w-[180px]" title={entry.description}>{entry.description}</p>
+                        )}
+                      </td>
+                      <td className="p-4 text-sm font-medium text-slate-700 whitespace-nowrap">{entry.supplier || '—'}</td>
+                      <td className="p-4 whitespace-nowrap">
+                        <span className="px-2 py-1 rounded-md bg-[var(--native-primary-light)] text-[var(--native-primary)] text-[11px] font-bold">
+                          {entry.itemCode}
+                        </span>
+                      </td>
+                      <td className="p-4 text-xs text-slate-500 whitespace-nowrap">{entry.date}</td>
+                      <td className="p-4 text-right font-bold text-slate-900 whitespace-nowrap">{fmt.format(entry.amount)}</td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <Badge variant={meta.variant} icon={meta.icon}>{meta.label}</Badge>
+                      </td>
+                      <td className="p-4 text-center" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button size="sm" variant="secondary" onClick={() => setAnalysingEntryId(entry.id)}>
+                            Analisar
+                          </Button>
+                          <button className="p-2 text-slate-400 hover:text-[var(--native-primary)] transition-colors" onClick={() => onEdit(entry)} title="Editar lançamento">
+                            <Edit size={14} />
+                          </button>
+                          {canDelete && (
+                            <button className="p-2 text-slate-400 hover:text-[var(--native-danger)] transition-colors" onClick={() => onDelete(entry.id)} title="Excluir">
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {analysingEntry && (
+        <DespesaDetail
+          entry={analysingEntry}
+          budgetItem={analysingBudgetItem}
+          spentBefore={analysingSpentBefore}
+          isAdmin={isAdmin}
+          onClose={() => setAnalysingEntryId(null)}
+          onStatusChange={onStatusChange}
+          onUpdateComment={onUpdateComment}
+        />
+      )}
     </div>
   );
 }

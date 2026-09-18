@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { LedgerEntry } from '../types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -46,6 +47,18 @@ export function getMonthLabel(monthKey: string): string {
 export function getSafePercent(part: number, total: number): number {
   if (!Number.isFinite(part) || !Number.isFinite(total) || total <= 0) return 0;
   return (part / total) * 100;
+}
+
+// Quanto já foi gasto num item do Plano de Trabalho, opcionalmente
+// excluindo um lançamento específico (usado ao editar/analisar uma
+// despesa já existente, para não contar o próprio valor duas vezes).
+// Extraído de App.tsx (era só o callback passado ao EditModal) para
+// ser reutilizado também em Ledger.tsx/DespesaDetail — mesma fórmula,
+// um único lugar.
+export function getSpentForItem(entries: LedgerEntry[], itemCode: string, excludeId?: string): number {
+  return entries
+    .filter(e => e.itemCode === itemCode && e.id !== excludeId)
+    .reduce((acc, e) => acc + e.amount, 0);
 }
 
 export function fileToDataUrl(file: File): Promise<string> {
