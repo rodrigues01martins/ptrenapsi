@@ -3,17 +3,13 @@ import { Home } from 'lucide-react';
 import { Button } from './ui/Button';
 
 interface HeaderProps {
-  isAdmin: boolean;
-  showItensButton: boolean;
   showExportButton: boolean;
   onGoHome: () => void;
-  onNavigateItens: () => void;
-  onNavigateUsuarios: () => void;
   onExportCSV: () => void;
   onSignOut: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ isAdmin, showItensButton, showExportButton, onGoHome, onNavigateItens, onNavigateUsuarios, onExportCSV, onSignOut }) => {
+export const Header: React.FC<HeaderProps> = ({ showExportButton, onGoHome, onExportCSV, onSignOut }) => {
   return (
     <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-30">
       <div className="max-w-[1440px] mx-auto h-24 px-6 md:px-10 flex items-center justify-between gap-6">
@@ -34,22 +30,6 @@ export const Header: React.FC<HeaderProps> = ({ isAdmin, showItensButton, showEx
             <Home size={16} />
             Início
           </button>
-          {isAdmin && showItensButton && (
-            <button
-              onClick={onNavigateItens}
-              className="text-sm font-medium text-slate-700 hover:text-[#007770] transition-colors whitespace-nowrap"
-            >
-              Cadastrar Itens
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={onNavigateUsuarios}
-              className="text-sm font-medium text-slate-700 hover:text-[#007770] transition-colors whitespace-nowrap"
-            >
-              Usuários
-            </button>
-          )}
           {showExportButton && (
             <button
               onClick={onExportCSV}

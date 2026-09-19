@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './Header';
 import { MonitoringNavigation, NavEntry } from './MonitoringNavigation';
-import { UserManagement } from './UserManagement';
 import RelatorioFinal from './RelatorioFinal';
 import Frequencia from '../pages/monitor/Frequencia';
 import Alcance from '../pages/monitor/Alcance';
@@ -10,7 +9,7 @@ import VisitaInLocoDashboard from '../pages/monitor/VisitaInLocoDashboard';
 import Formulario30DiasForm from '../pages/monitor/Formulario30DiasForm';
 import Painel30Dias from '../pages/monitor/Painel30Dias';
 
-type MetasTab = 'relatorio' | 'frequencia' | 'alcance' | 'eixo3' | 'eixo4' | 'formulario30dias' | 'painel30dias' | 'gestao';
+type MetasTab = 'relatorio' | 'frequencia' | 'alcance' | 'eixo3' | 'eixo4' | 'formulario30dias' | 'painel30dias';
 
 interface MonitoramentoAvaliacaoProps {
   isAdmin: boolean;
@@ -21,7 +20,6 @@ interface MonitoramentoAvaliacaoProps {
   canAccessEixo4: boolean;
   canAccessFormulario30Dias: boolean;
   canAccessPainel30Dias: boolean;
-  currentUserUid: string;
   onGoHome: () => void;
   onSignOut: () => void;
   showToast: (message: string) => void;
@@ -61,7 +59,7 @@ const MONITORING_NAV: MonitoringNavConfigEntry[] = [
 const TODAS_ABAS: MonitoringLeaf[] = MONITORING_NAV.flatMap(entry => (entry.type === 'group' ? entry.items : [entry]));
 
 export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (props) => {
-  const { isAdmin, onGoHome, onSignOut, showToast, currentUserUid } = props;
+  const { isAdmin, onGoHome, onSignOut, showToast } = props;
   const [activeTab, setActiveTab] = useState<MetasTab | null>(null);
 
   // Monta as entradas visíveis a partir da fonte única, na ordem definida
@@ -92,29 +90,21 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
   return (
     <div className="min-h-screen bg-[#f8fafc]">
       <Header
-        isAdmin={isAdmin}
-        showItensButton={false}
         showExportButton={false}
         onGoHome={onGoHome}
-        onNavigateItens={() => {}}
-        onNavigateUsuarios={() => setActiveTab('gestao')}
         onExportCSV={() => {}}
         onSignOut={onSignOut}
       />
 
       <div className="p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Escondida em Usuários: é página de gestão do app, sem lugar
-              no fluxo de navegação normal — acesso só pelo Header. */}
-          {activeTab !== 'gestao' && (
-            <div className="mb-8">
-              <MonitoringNavigation
-                entries={entries}
-                activeKey={activeTab}
-                onSelect={key => setActiveTab(key as MetasTab)}
-              />
-            </div>
-          )}
+          <div className="mb-8">
+            <MonitoringNavigation
+              entries={entries}
+              activeKey={activeTab}
+              onSelect={key => setActiveTab(key as MetasTab)}
+            />
+          </div>
 
           {!activeTab && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -133,7 +123,6 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
           {activeTab === 'formulario30dias' && <Formulario30DiasForm showToast={showToast} />}
           {activeTab === 'painel30dias' && <Painel30Dias />}
           {activeTab === 'relatorio' && <RelatorioFinal isAdmin={isAdmin} showToast={showToast} />}
-          {activeTab === 'gestao' && isAdmin && <UserManagement currentUserUid={currentUserUid} />}
         </div>
       </div>
     </div>

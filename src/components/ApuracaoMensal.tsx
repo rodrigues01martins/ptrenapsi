@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './Header';
-import { UserManagement } from './UserManagement';
 import Upload from '../pages/monitor/Upload';
 import Gerencial from '../pages/monitor/Gerencial';
 import Repasse from '../pages/monitor/Repasse';
 import Historico from '../pages/monitor/Historico';
 
-type ApuracaoTab = 'upload' | 'gerencial' | 'repasse' | 'historico' | 'gestao';
+type ApuracaoTab = 'upload' | 'gerencial' | 'repasse' | 'historico';
 
 interface ApuracaoMensalProps {
   isAdmin: boolean;
@@ -14,7 +13,6 @@ interface ApuracaoMensalProps {
   canAccessGerencial: boolean;
   canAccessRepasse: boolean;
   canAccessHistorico: boolean;
-  currentUserUid: string;
   onGoHome: () => void;
   onSignOut: () => void;
   showToast: (message: string) => void;
@@ -28,7 +26,7 @@ const TABS: { key: ApuracaoTab; label: string; can: (p: ApuracaoMensalProps) => 
 ];
 
 export const ApuracaoMensal: React.FC<ApuracaoMensalProps> = (props) => {
-  const { isAdmin, onGoHome, onSignOut, showToast, currentUserUid } = props;
+  const { onGoHome, onSignOut, showToast } = props;
   const [activeTab, setActiveTab] = useState<ApuracaoTab | null>(null);
   const visibleTabs = TABS.filter(t => t.can(props));
 
@@ -45,33 +43,25 @@ export const ApuracaoMensal: React.FC<ApuracaoMensalProps> = (props) => {
   return (
     <div className="min-h-screen bg-[#f8fafc]">
       <Header
-        isAdmin={isAdmin}
-        showItensButton={false}
         showExportButton={false}
         onGoHome={onGoHome}
-        onNavigateItens={() => {}}
-        onNavigateUsuarios={() => setActiveTab('gestao')}
         onExportCSV={() => {}}
         onSignOut={onSignOut}
       />
 
       <div className="p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Escondida em Usuários: é página de gestão do app, sem lugar
-              no fluxo de navegação normal — acesso só pelo Header. */}
-          {activeTab !== 'gestao' && (
-            <div className="mb-8 flex gap-3 flex-wrap">
-              {visibleTabs.map(t => (
-                <button
-                  key={t.key}
-                  onClick={() => setActiveTab(t.key)}
-                  className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === t.key ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="mb-8 flex gap-3 flex-wrap">
+            {visibleTabs.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === t.key ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
 
           {!activeTab && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -93,7 +83,6 @@ export const ApuracaoMensal: React.FC<ApuracaoMensalProps> = (props) => {
           {activeTab === 'gerencial' && <Gerencial />}
           {activeTab === 'repasse' && <Repasse />}
           {activeTab === 'historico' && <Historico showToast={showToast} />}
-          {activeTab === 'gestao' && isAdmin && <UserManagement currentUserUid={currentUserUid} />}
         </div>
       </div>
     </div>

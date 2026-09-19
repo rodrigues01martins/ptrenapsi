@@ -19,12 +19,12 @@ import { BudgetItem, LedgerEntry } from './types';
 import { UserManagement } from './components/UserManagement';
 import { getSpentForItem as calcSpentForItem } from './lib/utils';
 
-type FinanceiroTab = 'entry' | 'despesas' | 'report' | 'itens' | 'gestao';
+type FinanceiroTab = 'entry' | 'despesas' | 'report' | 'itens';
 
 function getStoredDimension(): Dimension | null {
   try {
     const v = sessionStorage.getItem('ptDimension');
-    return v === 'financeiro' || v === 'metas' || v === 'apuracao' ? v : null;
+    return v === 'financeiro' || v === 'metas' || v === 'apuracao' || v === 'gestao' ? v : null;
   } catch {
     return null;
   }
@@ -372,7 +372,32 @@ export function App() {
 
   // Usuário autenticado, mas ainda não escolheu a dimensão nesta sessão
   if (!dimension) {
-    return <DimensionSelect onSelect={chooseDimension} onSignOut={handleSignOut} />;
+    return <DimensionSelect isAdmin={isAdmin} onSelect={chooseDimension} onSignOut={handleSignOut} />;
+  }
+
+  // ── Dimensão: Gestão do Aplicativo (global, fora dos 3 módulos) ────
+  if (dimension === 'gestao') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc]">
+        <Header showExportButton={false} onGoHome={handleGoHome} onExportCSV={() => {}} onSignOut={handleSignOut} />
+        <div className="p-4 md:p-8">
+          <div className="max-w-7xl mx-auto">
+            {isAdmin ? (
+              <UserManagement currentUserUid={user?.uid || ''} />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
+                  <span className="text-3xl">🔒</span>
+                </div>
+                <h2 className="text-xl font-bold text-slate-700 mb-2">Acesso restrito</h2>
+                <p className="text-slate-400 text-sm">Esta área é exclusiva de administradores.</p>
+              </div>
+            )}
+          </div>
+        </div>
+        <Toast message={toast.message} isVisible={toast.isVisible} />
+      </div>
+    );
   }
 
   // ── Dimensão: Apuração Mensal ──────────────────────────────────
@@ -385,7 +410,6 @@ export function App() {
           canAccessGerencial={canAccessGerencial}
           canAccessRepasse={canAccessRepasse}
           canAccessHistorico={canAccessHistorico}
-          currentUserUid={user?.uid || ''}
           onGoHome={handleGoHome}
           onSignOut={handleSignOut}
           showToast={showToast}
@@ -408,7 +432,6 @@ export function App() {
           canAccessEixo4={canAccessEixo4}
           canAccessFormulario30Dias={canAccessFormulario30Dias}
           canAccessPainel30Dias={canAccessPainel30Dias}
-          currentUserUid={user?.uid || ''}
           onGoHome={handleGoHome}
           onSignOut={handleSignOut}
           showToast={showToast}
@@ -422,12 +445,8 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc]">
       <Header
-        isAdmin={isAdmin}
-        showItensButton={true}
         showExportButton={true}
         onGoHome={handleGoHome}
-        onNavigateItens={() => setActiveTab('itens')}
-        onNavigateUsuarios={() => setActiveTab('gestao')}
         onExportCSV={handleExportCSV}
         onSignOut={handleSignOut}
       />
@@ -435,38 +454,42 @@ export function App() {
       <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
 
-        {/* ── Tabs ── */}
-        {/* Escondida em Cadastrar Itens/Usuários: são páginas de gestão do
-            app, sem lugar no fluxo de navegação normal — acesso só pelo
-            Header, restrito a admins. */}
-        {activeTab !== 'itens' && activeTab !== 'gestao' && (
-          <div className="mb-8 flex gap-3 flex-wrap">
-            {(isAdmin || canAccessEntry) && (
-              <button
-                onClick={() => setActiveTab('entry')}
-                className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-              >
-                Novo Lançamento
-              </button>
-            )}
-            {(isAdmin || canAccessReport) && (
-              <button
-                onClick={() => setActiveTab('despesas')}
-                className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'despesas' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-              >
-                Acompanhar Despesa
-              </button>
-            )}
-            {(isAdmin || canAccessReport) && (
-              <button
-                onClick={() => setActiveTab('report')}
-                className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
-              >
-                Painel
-              </button>
-            )}
-          </div>
-        )}
+        {/* ── Tabs — Cadastrar Itens é só mais uma aba do módulo, para não
+            deixar o usuário sem caminho de volta às abas operacionais ── */}
+        <div className="mb-8 flex gap-3 flex-wrap">
+          {(isAdmin || canAccessEntry) && (
+            <button
+              onClick={() => setActiveTab('entry')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+            >
+              Novo Lançamento
+            </button>
+          )}
+          {(isAdmin || canAccessReport) && (
+            <button
+              onClick={() => setActiveTab('despesas')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'despesas' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+            >
+              Acompanhar Despesa
+            </button>
+          )}
+          {(isAdmin || canAccessReport) && (
+            <button
+              onClick={() => setActiveTab('report')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+            >
+              Painel
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('itens')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'itens' ? 'bg-[#007770] text-white shadow-lg' : 'bg-white text-[#007770] border'}`}
+            >
+              Cadastrar Itens
+            </button>
+          )}
+        </div>
 
         {/* ── Aba: Novo Lançamento ── */}
         {activeTab === 'entry' && (isAdmin || canAccessEntry) && (
@@ -516,11 +539,6 @@ export function App() {
         {/* ── Aba: Itens do Plano — acesso restrito a admins ── */}
         {activeTab === 'itens' && isAdmin && (
           <BudgetItems budgetItems={budgetItems} showToast={showToast} />
-        )}
-
-        {/* ── Aba: Gestão de Usuários — acesso restrito a admins ── */}
-        {activeTab === 'gestao' && isAdmin && (
-          <UserManagement currentUserUid={user?.uid || ''} />
         )}
 
       </div>

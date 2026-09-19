@@ -1,9 +1,10 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 
-export type Dimension = 'financeiro' | 'metas' | 'apuracao';
+export type Dimension = 'financeiro' | 'metas' | 'apuracao' | 'gestao';
 
 interface DimensionSelectProps {
+  isAdmin: boolean;
   onSelect: (dimension: Dimension) => void;
   onSignOut: () => void;
 }
@@ -32,7 +33,7 @@ const DimensionOption: React.FC<DimensionOptionProps> = ({ lines, onClick }) => 
   </button>
 );
 
-export const DimensionSelect: React.FC<DimensionSelectProps> = ({ onSelect, onSignOut }) => {
+export const DimensionSelect: React.FC<DimensionSelectProps> = ({ isAdmin, onSelect, onSignOut }) => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white">
 
@@ -67,6 +68,12 @@ export const DimensionSelect: React.FC<DimensionSelectProps> = ({ onSelect, onSi
             lines={['Apuração Mensal']}
             onClick={() => onSelect('apuracao')}
           />
+          {isAdmin && (
+            <DimensionOption
+              lines={['Gestão do', 'Aplicativo']}
+              onClick={() => onSelect('gestao')}
+            />
+          )}
         </div>
 
         {/* ── Marcas ── */}
