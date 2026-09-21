@@ -6,6 +6,7 @@ import KpiCard from '../../components/monitor/ui/KpiCard'
 import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
 import { Select } from '../../components/monitor/ui/Input'
+import Button from '../../components/monitor/ui/Button'
 
 const SvgIcon = ({ path, size = 28 }) => (
   <svg width={size} height={size} viewBox="0 -960 960 960" fill="var(--brand-primary)">
@@ -67,11 +68,14 @@ export default function Repasse() {
             Apuração do repasse — {formatarPeriodo(periodoSel)}
           </p>
         </div>
-        <Select value={periodoSel} onChange={e => setPeriodoSel(e.target.value)} style={{ width: '220px' }}>
-          {periodos.map(p => (
-            <option key={p.periodo} value={p.periodo}>{formatarPeriodo(p.periodo)} ({p.total})</option>
-          ))}
-        </Select>
+        <div className="no-print" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Select value={periodoSel} onChange={e => setPeriodoSel(e.target.value)} style={{ width: '220px' }}>
+            {periodos.map(p => (
+              <option key={p.periodo} value={p.periodo}>{formatarPeriodo(p.periodo)} ({p.total})</option>
+            ))}
+          </Select>
+          <Button variant="primary" onClick={() => window.print()}>Imprimir / Salvar PDF</Button>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>

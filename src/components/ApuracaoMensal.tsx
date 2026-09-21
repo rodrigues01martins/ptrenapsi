@@ -51,7 +51,7 @@ export const ApuracaoMensal: React.FC<ApuracaoMensalProps> = (props) => {
 
       <div className="p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8 flex gap-3 flex-wrap">
+          <div className="no-print mb-8 flex gap-3 flex-wrap">
             {visibleTabs.map(t => (
               <button
                 key={t.key}
