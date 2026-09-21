@@ -6,10 +6,12 @@ import Frequencia from '../pages/monitor/Frequencia';
 import Alcance from '../pages/monitor/Alcance';
 import VisitaInLocoForm from '../pages/monitor/VisitaInLocoForm';
 import VisitaInLocoDashboard from '../pages/monitor/VisitaInLocoDashboard';
+import VisitaInLocoPraticaForm from '../pages/monitor/VisitaInLocoPraticaForm';
+import VisitaInLocoPraticaDashboard from '../pages/monitor/VisitaInLocoPraticaDashboard';
 import Formulario30DiasForm from '../pages/monitor/Formulario30DiasForm';
 import Painel30Dias from '../pages/monitor/Painel30Dias';
 
-type MetasTab = 'relatorio' | 'frequencia' | 'alcance' | 'eixo3' | 'eixo4' | 'formulario30dias' | 'painel30dias';
+type MetasTab = 'relatorio' | 'frequencia' | 'alcance' | 'eixo3' | 'eixo3pratica' | 'eixo4' | 'eixo4pratica' | 'formulario30dias' | 'painel30dias';
 
 interface MonitoramentoAvaliacaoProps {
   isAdmin: boolean;
@@ -39,7 +41,8 @@ type MonitoringNavConfigEntry =
 const MONITORING_NAV: MonitoringNavConfigEntry[] = [
   {
     type: 'group', label: 'Formulários', items: [
-      { key: 'eixo3',             label: 'Visita In Loco',                  can: p => p.isAdmin || p.canAccessEixo3 },
+      { key: 'eixo3',             label: 'Visita In Loco – Teórica',        can: p => p.isAdmin || p.canAccessEixo3 },
+      { key: 'eixo3pratica',      label: 'Visita In Loco – Prática',        can: p => p.isAdmin || p.canAccessEixo3 },
       { key: 'formulario30dias',  label: 'Verificação Inicial — 30 Dias',   can: p => p.isAdmin || p.canAccessFormulario30Dias },
       { key: 'relatorio',         label: 'Relatório Final',                 can: p => p.isAdmin || p.canAccessRelatorio },
     ],
@@ -48,7 +51,8 @@ const MONITORING_NAV: MonitoringNavConfigEntry[] = [
     type: 'group', label: 'Painéis', items: [
       { key: 'frequencia',   label: 'Eixo 1 — Inclusão',                can: p => p.isAdmin || p.canAccessFrequencia },
       { key: 'alcance',      label: 'Eixo 2 — Alcance',                 can: p => p.isAdmin || p.canAccessAlcance },
-      { key: 'eixo4',        label: 'Visitas In Loco',                  can: p => p.isAdmin || p.canAccessEixo4 },
+      { key: 'eixo4',        label: 'Visita In Loco – Teórica',         can: p => p.isAdmin || p.canAccessEixo4 },
+      { key: 'eixo4pratica', label: 'Visita In Loco – Prática',         can: p => p.isAdmin || p.canAccessEixo4 },
       { key: 'painel30dias', label: 'Verificação Inicial — 30 Dias',    can: p => p.isAdmin || p.canAccessPainel30Dias },
     ],
   },
@@ -119,7 +123,9 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
           {activeTab === 'frequencia' && <Frequencia />}
           {activeTab === 'alcance' && <Alcance />}
           {activeTab === 'eixo3' && <VisitaInLocoForm showToast={showToast} />}
+          {activeTab === 'eixo3pratica' && <VisitaInLocoPraticaForm showToast={showToast} />}
           {activeTab === 'eixo4' && <VisitaInLocoDashboard />}
+          {activeTab === 'eixo4pratica' && <VisitaInLocoPraticaDashboard />}
           {activeTab === 'formulario30dias' && <Formulario30DiasForm showToast={showToast} />}
           {activeTab === 'painel30dias' && <Painel30Dias />}
           {activeTab === 'relatorio' && <RelatorioFinal isAdmin={isAdmin} showToast={showToast} />}

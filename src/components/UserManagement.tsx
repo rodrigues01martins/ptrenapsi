@@ -37,12 +37,12 @@ const PERMISSION_FIELDS: PermissionField[] = [
   { key: 'canAccessRepasse',   label: 'Repasse',   group: 'Apuração Mensal' },
   { key: 'canAccessHistorico', label: 'Histórico', group: 'Apuração Mensal' },
 
-  { key: 'canAccessEixo3',             label: 'Visita In Loco',                group: 'Monitoramento e Avaliação', subgroup: 'Formulários' },
+  { key: 'canAccessEixo3',             label: 'Visita In Loco (Teórica e Prática)', group: 'Monitoramento e Avaliação', subgroup: 'Formulários' },
   { key: 'canAccessFormulario30Dias',  label: 'Verificação Inicial — 30 Dias', group: 'Monitoramento e Avaliação', subgroup: 'Formulários' },
   { key: 'canAccessRelatorio',         label: 'Relatório Final',               group: 'Monitoramento e Avaliação', subgroup: 'Formulários' },
   { key: 'canAccessFrequencia',        label: 'Eixo 1 — Inclusão',             group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
   { key: 'canAccessAlcance',           label: 'Eixo 2 — Alcance',              group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
-  { key: 'canAccessEixo4',             label: 'Visitas In Loco',               group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
+  { key: 'canAccessEixo4',             label: 'Visita In Loco (Teórica e Prática)', group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
   { key: 'canAccessPainel30Dias',      label: 'Verificação Inicial — 30 Dias', group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
 
   { key: 'canAccessEntry',  label: 'Novo Lançamento',                       group: 'Acompanhamento Financeiro' },

@@ -7,16 +7,17 @@ import { ItemQuestao } from '../../components/monitor/ui/VisitaInLocoShared'
 import { useAutosave } from '../../hooks/useAutosave'
 import { MUNICIPIOS_GOIAS } from '../../data/municipiosGoias'
 import {
-  BLOCOS,
-  PONTUACAO_MAXIMA,
+  BLOCOS_PRATICA,
+  PONTUACAO_MAXIMA_PRATICA,
   OPCOES_PONTUACAO,
+  ITEM_TERREO_ID,
   calcularSemestre,
-  calcularPontuacao,
-  validarRespostasCompletas,
-  criarRascunhoVisita,
-  atualizarRascunhoVisita,
-  enviarVisita,
-} from '../../services/inLocoService'
+  calcularPontuacaoPratica,
+  validarRespostasCompletasPratica,
+  criarRascunhoVisitaPratica,
+  atualizarRascunhoVisitaPratica,
+  enviarVisitaPratica,
+} from '../../services/inLocoPraticaService'
 
 const MUNICIPIOS = MUNICIPIOS_GOIAS.map(m => m.nome).sort((a, b) => a.localeCompare(b, 'pt-BR'))
 
@@ -45,36 +46,32 @@ const cabecalhoInicial = () => {
     data_visita: data,
     hora_visita: hora,
     responsavel_visita: '',
-    representante_osc: '',
+    representante_local: '',
     semestre_referencia: calcularSemestre(data),
     local_terreo: false,
   }
 }
 
-export default function VisitaInLocoForm({ showToast }) {
+export default function VisitaInLocoPraticaForm({ showToast }) {
   const [cabecalho, setCabecalho] = useState(cabecalhoInicial)
   const [respostas, setRespostas] = useState({})
   const [salvando, setSalvando] = useState(null) // 'rascunho' | 'enviada' | null
   const [tentouEnviar, setTentouEnviar] = useState(false)
   const draftIdRef = useRef(null)
 
-  const calculo = calcularPontuacao(respostas)
-  const completo = validarRespostasCompletas(respostas)
+  const calculo = calcularPontuacaoPratica(respostas)
+  const completo = validarRespostasCompletasPratica(respostas)
 
-  // Cabeçalho mínimo já exigido hoje pelo botão "Salvar Rascunho" —
-  // reaproveitado como gatilho de quando o autosave pode começar a
-  // existir como documento (evita rascunhos vazios criados só porque a
-  // página foi aberta).
   const cabecalhoMinimoCompleto = !!(
-    cabecalho.municipio && cabecalho.nome_local && cabecalho.responsavel_visita && cabecalho.representante_osc
+    cabecalho.municipio && cabecalho.nome_local && cabecalho.responsavel_visita && cabecalho.representante_local
   )
 
   const saveDraft = useCallback(async (dados) => {
     if (!dados) return
     if (draftIdRef.current) {
-      await atualizarRascunhoVisita(draftIdRef.current, dados)
+      await atualizarRascunhoVisitaPratica(draftIdRef.current, dados)
     } else {
-      const id = await criarRascunhoVisita(dados, { uid: auth.currentUser?.uid, email: auth.currentUser?.email })
+      const id = await criarRascunhoVisitaPratica(dados, { uid: auth.currentUser?.uid, email: auth.currentUser?.email })
       draftIdRef.current = id
     }
   }, [])
@@ -96,11 +93,12 @@ export default function VisitaInLocoForm({ showToast }) {
 
   function alternarTerreo(checked) {
     setCabecalho(c => ({ ...c, local_terreo: checked }))
+    if (!ITEM_TERREO_ID) return
     setRespostas(r => ({
       ...r,
-      item_2_3: checked
-        ? { pontuacao: 2, observacoes: r.item_2_3?.observacoes || '' }
-        : { pontuacao: undefined, observacoes: r.item_2_3?.observacoes || '' },
+      [ITEM_TERREO_ID]: checked
+        ? { pontuacao: 2, observacoes: r[ITEM_TERREO_ID]?.observacoes || '' }
+        : { pontuacao: undefined, observacoes: r[ITEM_TERREO_ID]?.observacoes || '' },
     }))
   }
 
@@ -120,10 +118,6 @@ export default function VisitaInLocoForm({ showToast }) {
     autosave.reset()
   }
 
-  // Salvar Rascunho manual: continua útil como ação explícita — força a
-  // persistência imediata (equivalente a saveNow) em vez de esperar o
-  // debounce. Diferente de antes, NÃO limpa mais o formulário: agora o
-  // rascunho é um documento vivo que o autosave continua atualizando.
   async function handleSalvarRascunho() {
     if (!cabecalhoMinimoCompleto) {
       setTentouEnviar(true)
@@ -155,10 +149,7 @@ export default function VisitaInLocoForm({ showToast }) {
 
     setSalvando('enviada')
     try {
-      // Promove o próprio rascunho autosalvo para 'enviada' (não
-      // duplica documento); sem rascunho prévio, cria direto como
-      // enviada — mesmo resultado de antes.
-      await enviarVisita(
+      await enviarVisitaPratica(
         draftIdRef.current,
         { ...cabecalho, respostas },
         { uid: auth.currentUser?.uid, email: auth.currentUser?.email }
@@ -176,10 +167,10 @@ export default function VisitaInLocoForm({ showToast }) {
     <div style={{ paddingBottom: '96px' }}>
       <div style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '26px', fontWeight: 700, lineHeight: '32px', color: 'var(--text-primary)', fontFamily: 'var(--font-family)', letterSpacing: '-0.01em' }}>
-          Formulário de Visita In Loco – Teórica
+          Formulário de Visita In Loco – Prática
         </h2>
         <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px', fontFamily: 'var(--font-family)' }}>
-          Fiscalização de cursos teóricos de aprendizagem — preenchimento em campo
+          Avaliação do estabelecimento onde o aprendiz executa a atividade prática de aprendizagem
         </p>
       </div>
 
@@ -190,11 +181,11 @@ export default function VisitaInLocoForm({ showToast }) {
             <option value="">Selecione…</option>
             {MUNICIPIOS.map(m => <option key={m} value={m}>{m}</option>)}
           </Select>
-          <Input label="Nome do local *" value={cabecalho.nome_local} onChange={e => atualizarCabecalho('nome_local', e.target.value)} placeholder="OSC / unidade de ensino" />
+          <Input label="Nome do estabelecimento *" value={cabecalho.nome_local} onChange={e => atualizarCabecalho('nome_local', e.target.value)} placeholder="Empresa / local da prática" />
           <Input label="Data da visita *" type="date" value={cabecalho.data_visita} onChange={e => atualizarCabecalho('data_visita', e.target.value)} />
           <Input label="Hora da visita *" type="time" value={cabecalho.hora_visita} onChange={e => atualizarCabecalho('hora_visita', e.target.value)} />
           <Input label="Responsável pela visita *" value={cabecalho.responsavel_visita} onChange={e => atualizarCabecalho('responsavel_visita', e.target.value)} placeholder="Nome do(a) fiscal" />
-          <Input label="Representante da OSC *" value={cabecalho.representante_osc} onChange={e => atualizarCabecalho('representante_osc', e.target.value)} placeholder="Nome de quem acompanhou" />
+          <Input label="Representante do local *" value={cabecalho.representante_local} onChange={e => atualizarCabecalho('representante_local', e.target.value)} placeholder="Nome de quem acompanhou" />
           <Select label="Semestre de referência" value={cabecalho.semestre_referencia} onChange={e => atualizarCabecalho('semestre_referencia', e.target.value)}>
             {opcoesSemestre(cabecalho.semestre_referencia).map(s => (
               <option key={s} value={s}>{s}</option>
@@ -209,7 +200,7 @@ export default function VisitaInLocoForm({ showToast }) {
           </span>
         </label>
 
-        {tentouEnviar && (!cabecalho.municipio || !cabecalho.nome_local || !cabecalho.responsavel_visita || !cabecalho.representante_osc) && (
+        {tentouEnviar && (!cabecalho.municipio || !cabecalho.nome_local || !cabecalho.responsavel_visita || !cabecalho.representante_local) && (
           <p style={{ fontSize: '12px', color: 'var(--status-danger-text)', marginTop: '10px', fontFamily: 'var(--font-family)' }}>
             Preencha todos os campos marcados com * antes de continuar.
           </p>
@@ -217,14 +208,21 @@ export default function VisitaInLocoForm({ showToast }) {
       </div>
 
       {/* ── Blocos de avaliação ── */}
-      {BLOCOS.map(bloco => {
+      {BLOCOS_PRATICA.map(bloco => {
         const pontosBloco = bloco.itens.reduce((s, item) => s + (respostas[item.id]?.pontuacao ?? 0), 0)
         return (
           <div key={bloco.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-default)', flexWrap: 'wrap', gap: '8px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-family)' }}>
-                {bloco.titulo}
-              </h3>
+              <div>
+                <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-family)' }}>
+                  {bloco.titulo}
+                </h3>
+                {bloco.objetivo && (
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-family)', marginTop: '2px' }}>
+                    {bloco.objetivo}
+                  </p>
+                )}
+              </div>
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brand-primary)', fontFamily: 'var(--font-family)' }}>
                 {pontosBloco} / {bloco.maxPontos} pts
               </span>
@@ -235,7 +233,7 @@ export default function VisitaInLocoForm({ showToast }) {
                 item={item}
                 opcoesPontuacao={OPCOES_PONTUACAO}
                 resposta={respostas[item.id]}
-                disabled={item.id === 'item_2_3' && cabecalho.local_terreo}
+                disabled={item.id === ITEM_TERREO_ID && cabecalho.local_terreo}
                 onPontuacao={valor => setPontuacao(item.id, valor)}
                 onObservacoes={texto => setObservacoes(item.id, texto)}
               />
@@ -270,7 +268,7 @@ export default function VisitaInLocoForm({ showToast }) {
             Pontuação total
           </p>
           <p style={{ fontSize: '22px', fontWeight: 700, color: 'var(--brand-primary)', fontFamily: 'var(--font-family)' }}>
-            {calculo.pontuacaoTotal} / {PONTUACAO_MAXIMA} <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>({calculo.icl.toFixed(1)}%)</span>
+            {calculo.pontuacaoTotal} / {PONTUACAO_MAXIMA_PRATICA} <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>({calculo.icl.toFixed(1)}%)</span>
           </p>
           <div style={{ marginTop: '4px' }}>
             <AutosaveStatus status={autosave.status} lastSavedAt={autosave.lastSavedAt} onRetry={() => autosave.saveNow()} />

@@ -6,13 +6,13 @@ import EmptyState from '../../components/monitor/ui/EmptyState'
 import { Select } from '../../components/monitor/ui/Input'
 import { EspelhoVisita, formatarDataBR } from '../../components/monitor/ui/VisitaInLocoShared'
 import {
-  BLOCOS,
-  PONTUACAO_MAXIMA,
+  BLOCOS_PRATICA,
+  PONTUACAO_MAXIMA_PRATICA,
   OPCOES_PONTUACAO,
   classificarLocal,
   classificarRedeISLA,
-  buscarTodasVisitas,
-} from '../../services/inLocoService'
+  buscarTodasVisitasPratica,
+} from '../../services/inLocoPraticaService'
 
 const SvgIcon = ({ path, size = 28 }) => (
   <svg width={size} height={size} viewBox="0 -960 960 960" fill="var(--brand-primary)">
@@ -27,9 +27,13 @@ const ICONS = {
 }
 
 // ============================================================
-// PAINEL — KPIs + tabela
+// PAINEL — VISITA IN LOCO – PRÁTICA
 // ============================================================
-export default function VisitaInLocoDashboard() {
+// Mesma família visual/estrutural do Painel Teórico (VisitaInLocoDashboard.jsx),
+// consumindo exclusivamente visitas_inloco_pratica — nunca mistura com a
+// coleção da Teórica. Metodologia idêntica (ICL genérico = pontos ÷
+// máximo × 100); nenhum peso, meta ou threshold novo foi criado.
+export default function VisitaInLocoPraticaDashboard() {
   const [visitas, setVisitas] = useState([])
   const [loading, setLoading] = useState(true)
   const [semestreSel, setSemestreSel] = useState('')
@@ -37,7 +41,7 @@ export default function VisitaInLocoDashboard() {
   const [visitaAberta, setVisitaAberta] = useState(null)
 
   useEffect(() => {
-    buscarTodasVisitas().then(todas => {
+    buscarTodasVisitasPratica().then(todas => {
       setVisitas(todas)
       const semestres = [...new Set(todas.map(v => v.semestre_referencia))].sort().reverse()
       if (semestres.length) setSemestreSel(semestres[0])
@@ -72,17 +76,17 @@ export default function VisitaInLocoDashboard() {
       <EspelhoVisita
         visita={visitaAberta}
         onVoltar={() => setVisitaAberta(null)}
-        blocos={BLOCOS}
-        pontuacaoMaxima={PONTUACAO_MAXIMA}
+        blocos={BLOCOS_PRATICA}
+        pontuacaoMaxima={PONTUACAO_MAXIMA_PRATICA}
         opcoesPontuacao={OPCOES_PONTUACAO}
-        titulo="Espelho da Visita In Loco – Teórica"
+        titulo="Espelho da Visita In Loco – Prática"
         camposGerais={[
           ['Município', visitaAberta.municipio],
-          ['Nome do local', visitaAberta.nome_local],
+          ['Nome do estabelecimento', visitaAberta.nome_local],
           ['Data da visita', formatarDataBR(visitaAberta.data_visita)],
           ['Hora da visita', visitaAberta.hora_visita],
           ['Responsável pela visita', visitaAberta.responsavel_visita],
-          ['Representante da OSC', visitaAberta.representante_osc],
+          ['Representante do local', visitaAberta.representante_local],
         ]}
       />
     )
@@ -93,11 +97,11 @@ export default function VisitaInLocoDashboard() {
       <div>
         <div style={{ marginBottom: '24px' }}>
           <h2 style={{ fontSize: '26px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-family)', letterSpacing: '-0.01em' }}>
-            Painel Visita In Loco – Teórica
+            Painel Visita In Loco – Prática
           </h2>
         </div>
         <div style={{ background: 'var(--bg-surface)', border: '1px dashed var(--border-brand)', borderRadius: 'var(--radius-md)' }}>
-          <EmptyState title="Nenhuma visita registrada" description="As visitas aparecem aqui assim que forem enviadas pelo Formulário de Visita In Loco – Teórica." />
+          <EmptyState title="Ainda não há visitas práticas registradas" description="As visitas aparecem aqui assim que forem enviadas pelo Formulário de Visita In Loco – Prática." />
         </div>
       </div>
     )
@@ -105,13 +109,13 @@ export default function VisitaInLocoDashboard() {
 
   const Ns = visitasFiltradas.length
   const somaPontos = visitasFiltradas.reduce((s, v) => s + (v.pontuacaoTotal || 0), 0)
-  const isla = Ns > 0 ? (somaPontos / (PONTUACAO_MAXIMA * Ns)) * 100 : 0
+  const isla = Ns > 0 ? (somaPontos / (PONTUACAO_MAXIMA_PRATICA * Ns)) * 100 : 0
   const nAptos = visitasFiltradas.filter(v => (v.icl || 0) >= 70).length
   const tla = Ns > 0 ? (nAptos / Ns) * 100 : 0
   const redeStatus = classificarRedeISLA(isla)
 
-  const mediaPorBloco = BLOCOS.map(bloco => {
-    const campo = `pontuacaoBloco${bloco.id.split('_')[1]}`
+  const mediaPorBloco = BLOCOS_PRATICA.map(bloco => {
+    const campo = `pontuacaoBloco${bloco.id.split('_').pop()}`
     const media = Ns > 0 ? visitasFiltradas.reduce((s, v) => s + (v[campo] || 0), 0) / Ns : 0
     return { bloco, media, pct: bloco.maxPontos > 0 ? (media / bloco.maxPontos) * 100 : 0 }
   })
@@ -121,10 +125,10 @@ export default function VisitaInLocoDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontSize: '26px', fontWeight: 700, lineHeight: '32px', color: 'var(--text-primary)', fontFamily: 'var(--font-family)', letterSpacing: '-0.01em' }}>
-            Painel Visita In Loco – Teórica
+            Painel Visita In Loco – Prática
           </h2>
           <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px', fontFamily: 'var(--font-family)' }}>
-            Resultados, desempenho e indicadores semestrais de fiscalização
+            Resultados, desempenho e indicadores semestrais dos estabelecimentos de prática
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -146,7 +150,7 @@ export default function VisitaInLocoDashboard() {
         <>
           {/* KPIs */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-            <KpiCard icon={<SvgIcon path={ICONS.local} />} label="Locais Visitados" value={Ns} sub={`no semestre ${semestreSel}`} color="blue" />
+            <KpiCard icon={<SvgIcon path={ICONS.local} />} label="Estabelecimentos Visitados" value={Ns} sub={`no semestre ${semestreSel}`} color="blue" />
             <KpiCard icon={<SvgIcon path={ICONS.shield} />} label="ISLA Semestral" value={`${isla.toFixed(1)}%`} sub={redeStatus.label} color={redeStatus.variant === 'danger' ? 'danger' : redeStatus.variant === 'warning' ? 'warn' : redeStatus.variant === 'info' ? 'teal' : 'green'} />
             <KpiCard icon={<SvgIcon path={ICONS.check} />} label="Taxa de Locais Aptos" value={`${tla.toFixed(1)}%`} sub={`${nAptos} de ${Ns} com ICL ≥ 70%`} color="teal" />
           </div>
@@ -175,14 +179,14 @@ export default function VisitaInLocoDashboard() {
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-default)', background: 'var(--bg-subtle)' }}>
               <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-family)' }}>
-                Desempenho por Local
+                Desempenho por Estabelecimento
               </h3>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontFamily: 'var(--font-family)' }}>
                 <thead>
                   <tr>
-                    {['Município', 'Nome do Local', 'Data', 'Pontos', 'ICL', 'Classificação', 'Ações'].map(h => (
+                    {['Município', 'Nome do Estabelecimento', 'Data', 'Pontos', 'ICL', 'Classificação', 'Ações'].map(h => (
                       <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>
                         {h}
                       </th>
@@ -200,7 +204,7 @@ export default function VisitaInLocoDashboard() {
                         <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{v.municipio}</td>
                         <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{v.nome_local}</td>
                         <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{formatarDataBR(v.data_visita)}</td>
-                        <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{v.pontuacaoTotal} / {PONTUACAO_MAXIMA}</td>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{v.pontuacaoTotal} / {PONTUACAO_MAXIMA_PRATICA}</td>
                         <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 700 }}>{v.icl?.toFixed(1)}%</td>
                         <td style={{ padding: '12px 16px' }}><Badge variant={classif.variant}>{classif.label}</Badge></td>
                         <td style={{ padding: '12px 16px' }}>
