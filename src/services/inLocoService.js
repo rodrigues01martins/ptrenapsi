@@ -51,13 +51,13 @@ export const BLOCOS = [
   },
   {
     id: 'bloco_4',
-    titulo: 'Acesso aos Meios Tecnológicos de Aprendizagem',
+    titulo: 'Condições e Acesso aos Meios de Aprendizagem',
     maxPontos: 8,
     itens: [
-      { id: 'item_4_1', label: 'Proporção de equipamentos por aluno', descricao: 'Laboratório com computadores individuais suficientes para as práticas.' },
-      { id: 'item_4_2', label: 'Conectividade à internet', descricao: 'Banda e estabilidade adequadas para uso simultâneo de toda a turma.' },
-      { id: 'item_4_3', label: 'Segurança cibernética e filtros', descricao: 'Bloqueio de conteúdos impróprios: pornografia, apostas, violência.' },
-      { id: 'item_4_4', label: 'Recursos em sala de aula', descricao: 'Quadro ou multimídia funcional para apresentação de conteúdo.' },
+      { id: 'item_4_1', label: 'Cadeiras suficientes', descricao: 'Sala de aula com carteiras suficientes para todos os alunos' },
+      { id: 'item_4_2', label: 'Conectividade à internet', descricao: 'Há banda larga estável adequada para o acesso de todos os alunos' },
+      { id: 'item_4_3', label: 'Quantidade de alunos na sala', descricao: 'O número de alunos era adequado para o tamanho da sala de aula' },
+      { id: 'item_4_4', label: 'Recursos em sala de aula', descricao: 'Quadro branco ou multimídia (Data Show) para apresentação de conteúdo' },
     ],
   },
 ]
