@@ -137,10 +137,18 @@ export default function Painel30Dias() {
   }))
   const statsOrdenadas = [...statsPerguntas].sort((a, b) => (a.percentual ?? -1) - (b.percentual ?? -1))
 
-  // Q12 — questão de caracterização, sem score
-  const q12Respostas = respostasFiltradas.map(r => r.respostas?.q12)
-  const q12Sim = q12Respostas.filter(v => v === 'SIM').length
-  const q12Nao = q12Respostas.filter(v => v === 'NAO').length
+  // Perguntas de caracterização (sem score — hoje Q12 e Q21). Genérico
+  // para não depender de qual/quantas existem: cada uma é tabulada pelas
+  // suas próprias opções, nunca por um valor fixo tipo SIM/NÃO.
+  const perguntasCaracterizacao = QUESTION_DEFINITIONS.filter(q => !q.scored)
+  const statsCaracterizacao = perguntasCaracterizacao.map(q => {
+    const valores = respostasFiltradas.map(r => r.respostas?.[q.id])
+    return {
+      id: q.id,
+      textoResumido: q.textoResumido,
+      contagens: q.opcoes.map(op => ({ label: op.label, quantidade: valores.filter(v => v === op.valor).length })),
+    }
+  })
 
   return (
     <div>
@@ -249,22 +257,27 @@ export default function Painel30Dias() {
             </div>
           </div>
 
-          {/* ── Q12: caracterização (sem conformidade) ── */}
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-              <Badge variant="neutral">CARACTERIZAÇÃO</Badge>
-              <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', fontFamily: 'var(--font-family)' }}>
-                Q12 — Necessita utilizar transporte público
+          {/* ── Perguntas de caracterização (sem conformidade) ── */}
+          {statsCaracterizacao.map(stat => (
+            <div key={stat.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <Badge variant="neutral">CARACTERIZAÇÃO</Badge>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', fontFamily: 'var(--font-family)' }}>
+                  {stat.id.toUpperCase()} — {stat.textoResumido}
+                </p>
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-family)', marginBottom: '10px' }}>
+                Questão de caracterização — não compõe nenhum dos cinco indicadores.
               </p>
+              <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                {stat.contagens.map(c => (
+                  <span key={c.label} style={{ fontSize: '14px', fontFamily: 'var(--font-family)' }}>
+                    <strong>{c.label}:</strong> {c.quantidade}
+                  </span>
+                ))}
+              </div>
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-family)', marginBottom: '10px' }}>
-              Questão de caracterização — não compõe nenhum dos cinco indicadores.
-            </p>
-            <div style={{ display: 'flex', gap: '24px' }}>
-              <span style={{ fontSize: '14px', fontFamily: 'var(--font-family)' }}><strong>SIM:</strong> {q12Sim}</span>
-              <span style={{ fontSize: '14px', fontFamily: 'var(--font-family)' }}><strong>NÃO:</strong> {q12Nao}</span>
-            </div>
-          </div>
+          ))}
 
           {/* ── Bloco 5: Tabela analítica ── */}
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
@@ -287,11 +300,13 @@ export default function Painel30Dias() {
                 <tbody>
                   {QUESTION_DEFINITIONS.map(q => {
                     if (!q.scored) {
+                      const stat = statsCaracterizacao.find(s => s.id === q.id)
+                      const resumo = stat.contagens.map(c => `${c.label}: ${c.quantidade}`).join(' · ')
                       return (
                         <tr key={q.id} style={{ borderBottom: '1px solid var(--border-default)' }}>
                           <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{q.id.toUpperCase()} — {q.textoResumido}</td>
                           <td style={{ padding: '12px 16px' }}><Badge variant="neutral">Caracterização</Badge></td>
-                          <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }} colSpan={4}>SIM: {q12Sim} · NÃO: {q12Nao}</td>
+                          <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }} colSpan={4}>{resumo}</td>
                           <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>—</td>
                         </tr>
                       )
@@ -341,8 +356,26 @@ export default function Painel30Dias() {
               formatarPercentual(stats.percentual),
             ]
           })
+          // No IRI, a Modalidade (Q21) aparece como contexto de
+          // caracterização — nunca como critério pontuável, nunca somada
+          // ao "Perguntas que compõem o indicador" acima.
+          const statModalidade = drillIndicador === 'IRI' ? statsCaracterizacao.find(s => s.id === 'q21') : null
           return (
             <>
+              {statModalidade && (
+                <div style={{ marginBottom: '16px', padding: '12px 16px', background: 'var(--bg-subtle)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-family)', marginBottom: '6px' }}>
+                    Modalidade do curso (caracterização — não pontua)
+                  </p>
+                  <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                    {statModalidade.contagens.map(c => (
+                      <span key={c.label} style={{ fontSize: '13px', fontFamily: 'var(--font-family)' }}>
+                        <strong>{c.label}:</strong> {c.quantidade}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <DrilldownComposicao itens={[
                 { label: 'Resultado', valor: formatarPercentual(ind.percentual), destaque: true },
                 { label: 'Base válida', valor: ind.baseValida },

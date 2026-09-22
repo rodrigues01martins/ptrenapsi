@@ -4,17 +4,21 @@ import { collection, addDoc, updateDoc, getDocs, doc, setDoc, serverTimestamp } 
 // ============================================================
 // FORMULÁRIO DE VERIFICAÇÃO INICIAL DO APRENDIZ — 30 DIAS
 // ============================================================
-// Módulo único: definição das 20 perguntas/5 indicadores, normalização de
+// Módulo único: definição das 24 perguntas/5 indicadores, normalização de
 // respostas e cálculo dos indicadores (funções puras, independentes da
 // camada visual) + persistência no Firestore.
 //
 // Banco armazena só respostas brutas (strings) — os indicadores são
 // sempre recalculados a partir delas, nunca lidos de um agregado
 // persistido (evita divergência entre o que foi respondido e o que o
-// painel mostra).
+// painel mostra). Isso também é o que preserva o IRI histórico: uma
+// pergunta que não existia quando o registro foi respondido (q22/q23/q24
+// ausentes de respostas{}) cai em `undefined` em normalizeAnswer() e fica
+// fora do denominador automaticamente — sem precisar recalcular nada
+// retroativamente nem versionar o schema.
 
 export const INSTRUMENT_TYPE = 'FORMULARIO_APRENDIZ_30_DIAS'
-export const INSTRUMENT_VERSION = '1.0'
+export const INSTRUMENT_VERSION = '1.1'
 
 // ------------------------------------------------------------
 // VALORES DE RESPOSTA
@@ -42,6 +46,10 @@ export const OPCOES = {
     { valor: 'RECEBEU', label: 'RECEBEU' },
     { valor: 'NAO_RECEBEU', label: 'NÃO RECEBEU' },
     { valor: 'AINDA_NAO_ERA_DEVIDA', label: 'AINDA NÃO ERA DEVIDA' },
+  ],
+  EAD_PRESENCIAL: [
+    { valor: 'EAD', label: 'EAD' },
+    { valor: 'PRESENCIAL', label: 'PRESENCIAL' },
   ],
 }
 
@@ -71,11 +79,17 @@ export const QUESTION_DEFINITIONS = [
   { id: 'q15', texto: 'Você recebeu contato ou acompanhamento da RENAPSI durante seus primeiros 30 dias de participação?', textoResumido: 'Contato/acompanhamento da RENAPSI', dimensao: 'IAA', opcoes: OPCOES.SIM_NAO, scored: true },
   { id: 'q16', texto: 'Você sabe como entrar em contato com a RENAPSI caso tenha alguma dúvida, dificuldade ou precise de atendimento?', textoResumido: 'Conhece o canal de contato da RENAPSI', dimensao: 'IAA', opcoes: OPCOES.SIM_NAO, scored: true },
 
-  { id: 'q17', texto: 'As atividades que você realiza são compatíveis com a aprendizagem e não envolvem limpeza, serviços de copa, serviços particulares ou carregamento de peso excessivo?', textoResumido: 'Compatibilidade das atividades', dimensao: 'IACA', opcoes: OPCOES.SIM_NAO, scored: true },
+  { id: 'q17', texto: 'As atividades que você realiza são compatíveis com a aprendizagem em Administração? (limpeza, serviços de copa/cozinha, serviços particulares, outros)', textoResumido: 'Compatibilidade das atividades', dimensao: 'IACA', opcoes: OPCOES.SIM_NAO, scored: true },
   { id: 'q18', texto: 'O local onde você realiza as atividades permite que você trabalhe com segurança e sem exposição a atividade perigosa ou insalubre?', textoResumido: 'Segurança do local de atividade', dimensao: 'IACA', opcoes: OPCOES.SIM_NAO, scored: true },
 
   { id: 'q19', texto: 'Você já recebeu a primeira remuneração do Programa, caso a data prevista para o primeiro pagamento já tenha ocorrido?', textoResumido: 'Recebimento da primeira remuneração', dimensao: 'IEB', opcoes: OPCOES.RECEBEU_NAO_DEVIDA, scored: true },
   { id: 'q20', texto: 'Você sabe como solicitar atendimento ou acompanhamento da equipe da RENAPSI caso tenha alguma dificuldade pessoal, familiar, escolar ou relacionada ao trabalho?', textoResumido: 'Conhece o canal de apoio da RENAPSI', dimensao: 'IAA', opcoes: OPCOES.SIM_NAO, scored: true },
+
+  { id: 'q21', texto: 'Você realiza o curso em qual modalidade?', textoResumido: 'Modalidade do curso', dimensao: 'CARACTERIZACAO', opcoes: OPCOES.EAD_PRESENCIAL, scored: false },
+
+  { id: 'q22', texto: 'Você recebeu o login e a senha para acessar a Plataforma do Curso Teórico?', textoResumido: 'Login e senha da plataforma', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO_NA, scored: true },
+  { id: 'q23', texto: 'Você recebeu o calendário dos cursos?', textoResumido: 'Recebimento do calendário', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO, scored: true },
+  { id: 'q24', texto: 'Você recebeu o acesso ao seu formulário de frequência?', textoResumido: 'Acesso ao formulário de frequência', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO, scored: true },
 ]
 
 export const TODAS_PERGUNTAS_PONTUADAS = QUESTION_DEFINITIONS.filter(q => q.scored)
@@ -84,7 +98,7 @@ export const TODAS_PERGUNTAS_PONTUADAS = QUESTION_DEFINITIONS.filter(q => q.scor
 // INDICADORES — dimensão, nome completo, perguntas que a compõem
 // ------------------------------------------------------------
 export const INDICATOR_DEFINITIONS = [
-  { id: 'IRI',  nome: 'Índice de Regularidade do Ingresso',                 questoes: ['q1', 'q2', 'q3', 'q4'] },
+  { id: 'IRI',  nome: 'Índice de Regularidade do Ingresso',                 questoes: ['q1', 'q2', 'q3', 'q4', 'q22', 'q23', 'q24'] },
   { id: 'IRA',  nome: 'Índice de Regularidade da Aprendizagem',             questoes: ['q5', 'q6', 'q7', 'q8', 'q9'] },
   { id: 'IEB',  nome: 'Índice de Entregas e Benefícios',                    questoes: ['q10', 'q11', 'q13', 'q19'] },
   { id: 'IAA',  nome: 'Índice de Acompanhamento do Aprendiz',               questoes: ['q14', 'q15', 'q16', 'q20'] },
@@ -92,10 +106,13 @@ export const INDICATOR_DEFINITIONS = [
 ]
 
 // ------------------------------------------------------------
-// APLICABILIDADE — regra de negócio da Q12 → Q13
+// APLICABILIDADE — regras de negócio condicionais:
+// Q12 (necessita transporte?) → Q13 (recebeu VT?)
+// Q21 (modalidade do curso)   → Q22 (login/senha da plataforma), só EAD
 // ------------------------------------------------------------
 export function isApplicable(questionId, respostas) {
   if (questionId === 'q13') return respostas.q12 === 'SIM'
+  if (questionId === 'q22') return respostas.q21 === 'EAD'
   return true
 }
 

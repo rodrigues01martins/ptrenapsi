@@ -95,7 +95,7 @@ function BotaoResposta({ opcao, selecionado, disabled, onClick }) {
   )
 }
 
-function LinhaPergunta({ index, questao, valor, disabled, onResponder }) {
+function LinhaPergunta({ index, questao, valor, disabled, mensagemDesabilitado, onResponder }) {
   return (
     <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-default)' }}>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '10px' }}>
@@ -117,9 +117,9 @@ function LinhaPergunta({ index, questao, valor, disabled, onResponder }) {
           />
         ))}
       </div>
-      {disabled && (
+      {disabled && mensagemDesabilitado && (
         <p style={{ fontSize: '11px', color: 'var(--brand-primary)', fontFamily: 'var(--font-family)', marginTop: '8px' }}>
-          Marcada automaticamente como NÃO SE APLICA — a Q12 indica que o aprendiz não necessita de transporte público.
+          {mensagemDesabilitado}
         </p>
       )}
     </div>
@@ -178,6 +178,18 @@ export default function Formulario30DiasForm({ showToast }) {
       ...r,
       q12: valor,
       q13: valor === 'NAO' ? 'NAO_SE_APLICA' : (r.q13 === 'NAO_SE_APLICA' ? undefined : r.q13),
+    }))
+  }
+
+  // Mesma lógica da Q12 → Q13: ao trocar a modalidade, a resposta de
+  // login/senha nunca fica "escondida" ainda participando do IRI — ou é
+  // marcada NAO_SE_APLICA (Presencial) ou é limpa para responder de novo
+  // (voltou a ser EAD e o valor guardado era só o placeholder automático).
+  function handleQ21(valor) {
+    setRespostas(r => ({
+      ...r,
+      q21: valor,
+      q22: valor === 'PRESENCIAL' ? 'NAO_SE_APLICA' : (r.q22 === 'NAO_SE_APLICA' ? undefined : r.q22),
     }))
   }
 
@@ -287,8 +299,19 @@ export default function Formulario30DiasForm({ showToast }) {
             index={i + 1}
             questao={q}
             valor={respostas[q.id]}
-            disabled={q.id === 'q13' && !isApplicable('q13', respostas)}
-            onResponder={valor => q.id === 'q12' ? handleQ12(valor) : responder(q.id, valor)}
+            disabled={(q.id === 'q13' || q.id === 'q22') && !isApplicable(q.id, respostas)}
+            mensagemDesabilitado={
+              q.id === 'q13'
+                ? 'Marcada automaticamente como NÃO SE APLICA — a Q12 indica que o aprendiz não necessita de transporte público.'
+                : q.id === 'q22'
+                ? 'Marcada automaticamente como NÃO SE APLICA — a Q21 indica que o curso é realizado na modalidade presencial.'
+                : undefined
+            }
+            onResponder={valor => {
+              if (q.id === 'q12') return handleQ12(valor)
+              if (q.id === 'q21') return handleQ21(valor)
+              return responder(q.id, valor)
+            }}
           />
         ))}
 
