@@ -9,8 +9,10 @@ const colorMap = {
 
 // onDetails é opcional — quando fornecido, o card ganha affordance "Ver
 // detalhes" e vira acionável (clique + teclado), sem mudar em nada os
-// cards que não passam essa prop.
-export default function KpiCard({ label, value, sub, color = 'blue', icon, onDetails }) {
+// cards que não passam essa prop. detailsLabel troca só o texto da
+// affordance (ex.: "Detalhes →" nos cards com modal de detalhamento),
+// mantendo o padrão "Ver detalhes →" para todos os demais.
+export default function KpiCard({ label, value, sub, color = 'blue', icon, onDetails, detailsLabel = 'Ver detalhes →' }) {
   const c = colorMap[color] || colorMap.blue
   const acionavel = !!onDetails
 
@@ -99,7 +101,7 @@ export default function KpiCard({ label, value, sub, color = 'blue', icon, onDet
           fontFamily: 'var(--font-family)',
           marginTop: '10px',
         }}>
-          Ver detalhes →
+          {detailsLabel}
         </p>
       )}
     </div>

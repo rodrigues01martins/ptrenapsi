@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
-import { enriquecerDados, calcularAgregados, formatarPeriodo, parseMoeda } from '../../services/csvService'
+import { enriquecerDados, calcularAgregados, formatarPeriodo, parseMoeda, formatMoeda, selecionarPorFlag } from '../../services/csvService'
 import { baseGerencial, baseFinanceira } from '../../services/classificacaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import Loader from '../../components/monitor/ui/Loader'
 import EmptyState from '../../components/monitor/ui/EmptyState'
 import NotaMetodologica from '../../components/monitor/ui/NotaMetodologica'
 import MapaMunicipios from '../../components/monitor/ui/MapaMunicipios'
+import IndicatorListModal from '../../components/monitor/ui/IndicatorListModal'
 import { Select } from '../../components/monitor/ui/Input'
 
 const SvgIcon = ({ path, size = 28 }) => (
@@ -23,6 +24,7 @@ const ICONS = {
   building: 'M120-120v-560l320-160 320 160v560H120Zm80-80h560v-440L520-800 200-640v440Z',
   shield:   'M480-80q-139-35-229.5-159.5T160-516v-244l320-120 320 120v244q0 152-90.5 276.5T480-80Z',
   cake:     'M160-80v-80h640v80H160Zm0-160v-200q0-52 35-87.5t87-42.5l-2-10q0-42 29-71t71-29q42 0 71 29t29 71v10q52 8 86 43.5t34 86.5v200H160Z',
+  money:    'M441-120v-86q-53-12-91.5-46T293-348l74-30q15 48 44.5 73t77.5 25q41 0 69.5-18.5T587-356q0-35-22-55.5T463-458q-86-27-118-64.5T313-614q0-65 42-101t86-41v-84h80v84q50 8 82.5 36.5T651-650l-74 32q-12-32-34-48t-60-16q-44 0-67 19.5T393-614q0 33 30 52t104 40q69 20 104.5 63.5T667-358q0 71-42 108t-104 46v84h-80Z',
 }
 
 export default function Gerencial() {
@@ -31,6 +33,7 @@ export default function Gerencial() {
   const [agregados, setAgregados] = useState(null)
   const [dadosEnriquecidos, setDadosEnriquecidos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [modalAberto, setModalAberto] = useState(null) // 'acima18' | 'valeTransporte' | null
 
   useEffect(() => {
     buscarPeriodos().then(ps => { setPeriodos(ps); if (ps.length) setPeriodoSel(ps[0].periodo) })
@@ -39,6 +42,7 @@ export default function Gerencial() {
   useEffect(() => {
     if (!periodoSel) return
     setLoading(true)
+    setModalAberto(null) // troca de competência nunca mantém modal com dados da anterior
     buscarDadosPeriodo(periodoSel).then(dados => {
       const enriquecidos = enriquecerDados(dados)
       setDadosEnriquecidos(enriquecidos)
@@ -64,13 +68,39 @@ export default function Gerencial() {
   // Vale Transporte é um item de custo (oc_vt), igual aos demais que
   // compõem val_apu_inc — segue a regra de ouro e usa a base financeira,
   // não a gerencial: quem recebeu VT e foi desligado no meio do mês
-  // continua contando aqui.
-  const dadosComVT = baseFinanceira(dadosEnriquecidos).filter(r => parseMoeda(r.oc_vt) > 0)
+  // continua contando aqui. `recebeu_vt` é a mesma flag usada pelo mapa,
+  // pelo Card e pelo modal/Excel — nunca um filtro paralelo.
+  const dadosFinanceiros = baseFinanceira(dadosEnriquecidos)
+  const dadosComVT = selecionarPorFlag(dadosFinanceiros, 'recebeu_vt')
   const contagemVTPorCidade = {}
   dadosComVT.forEach(r => {
     const cidade = (r.cidade || '').toUpperCase().trim()
     if (cidade) contagemVTPorCidade[cidade] = (contagemVTPorCidade[cidade] || 0) + 1
   })
+
+  // Mesmo array/flag do Card "Acima de 18 anos — PCD ou Estabilidade"
+  // (agregados.total_acima_18_prot) — o modal/Excel nunca recalcula.
+  const registrosAcima18 = selecionarPorFlag(dadosFinanceiros, 'acima_18_protegido')
+
+  const COLUNAS_ACIMA_18 = [
+    { header: 'Nome', cell: r => r.nome || '—', excel: r => r.nome || '' },
+    { header: 'Município', cell: r => r.cidade || '—', excel: r => r.cidade || '' },
+    { header: 'Idade', cell: r => r._kpis.idade_anos, excel: r => r._kpis.idade_anos },
+    { header: 'PCD', cell: r => r._kpis.oc_pcds === 1 ? 'Sim' : 'Não', excel: r => r._kpis.oc_pcds === 1 ? 'Sim' : 'Não' },
+    { header: 'Estabilidade', cell: r => r._kpis.oc_estab === 1 ? 'Sim' : 'Não', excel: r => r._kpis.oc_estab === 1 ? 'Sim' : 'Não' },
+  ]
+
+  const COLUNAS_VALE_TRANSPORTE = [
+    { header: 'Nome', cell: r => r.nome || '—', excel: r => r.nome || '' },
+    { header: 'Município', cell: r => r.cidade || '—', excel: r => r.cidade || '' },
+    { header: 'Valor Vale Transporte', cell: r => formatMoeda(parseMoeda(r.oc_vt)), excel: r => parseMoeda(r.oc_vt) },
+  ]
+
+  // Ordem previsível (nome alfabético) para exibição no modal/Excel — em
+  // cópia, nunca ordenando os arrays já usados por Card/mapa.
+  const porNome = (a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR')
+  const registrosAcima18Ordenados = [...registrosAcima18].sort(porNome)
+  const registrosVTOrdenados = [...dadosComVT].sort(porNome)
 
   return (
     <div>
@@ -110,8 +140,25 @@ export default function Gerencial() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <KpiCard icon={<SvgIcon path={ICONS.building} />} label="Órgãos e Entidades" value={agregados.lotacoes} sub="locais de lotação" color="blue" />
-        <KpiCard icon={<SvgIcon path={ICONS.shield} />} label="Acima de 18 anos — PCD ou Estabilidade" value={agregados.total_acima_18_prot} sub="oc_pcds = 1 ou oc_estab = 1" color="purple" />
+        <KpiCard
+          icon={<SvgIcon path={ICONS.shield} />}
+          label="Acima de 18 anos — PCD ou Estabilidade"
+          value={agregados.total_acima_18_prot}
+          sub="oc_pcds = 1 ou oc_estab = 1"
+          color="purple"
+          onDetails={() => setModalAberto('acima18')}
+          detailsLabel="Detalhes →"
+        />
         <KpiCard icon={<SvgIcon path={ICONS.cake} />} label="Jovens que Atingiram 18 anos no Mês" value={agregados.total_aniversario_mes} sub="completaram 18 anos no período" color="warn" />
+        <KpiCard
+          icon={<SvgIcon path={ICONS.money} />}
+          label="Jovens que Receberam Vale Transporte no Mês"
+          value={dadosComVT.length}
+          sub="oc_vt > 0 no mês de referência"
+          color="teal"
+          onDetails={() => setModalAberto('valeTransporte')}
+          detailsLabel="Detalhes →"
+        />
       </div>
 
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '24px' }}>
@@ -130,6 +177,28 @@ export default function Gerencial() {
           key={periodoSel}
         />
       </div>
+
+      <IndicatorListModal
+        aberto={modalAberto === 'acima18'}
+        onFechar={() => setModalAberto(null)}
+        titulo="Acima de 18 anos - PCD ou estabilidade"
+        subtitulo={`Aprendizes enquadrados no indicador na competência ${formatarPeriodo(periodoSel)}`}
+        registros={registrosAcima18Ordenados}
+        colunas={COLUNAS_ACIMA_18}
+        nomeArquivo={`aprendizes_acima_18_pcd_estabilidade_${periodoSel}.xlsx`}
+        nomeAba="Acima 18 PCD Estabilidade"
+      />
+
+      <IndicatorListModal
+        aberto={modalAberto === 'valeTransporte'}
+        onFechar={() => setModalAberto(null)}
+        titulo="Jovens que receberam Vale Transporte no mês"
+        subtitulo={`Aprendizes enquadrados no indicador na competência ${formatarPeriodo(periodoSel)}`}
+        registros={registrosVTOrdenados}
+        colunas={COLUNAS_VALE_TRANSPORTE}
+        nomeArquivo={`aprendizes_vale_transporte_${periodoSel}.xlsx`}
+        nomeAba="Vale Transporte"
+      />
     </div>
   )
 }

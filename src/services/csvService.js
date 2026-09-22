@@ -126,6 +126,11 @@ export function calcularKPIs(row) {
     calcularIdadeAnos(data_nasc, data_base) === 18 &&
     data_nasc.getMonth() === data_base.getMonth()) ? 1 : 0
 
+  // 3b. Recebeu Vale Transporte no mês — mesma semântica já usada no mapa
+  // de VT do Gerencial (oc_vt é valor monetário, não booleano): recebeu
+  // se o valor lançado for maior que zero.
+  const recebeu_vt = (parseMoeda(row.oc_vt) > 0) ? 1 : 0
+
   // 4. Tempo de contrato em meses
   const meses_contrato = (data_admin && data_termino)
     ? Math.floor((data_termino - data_admin) / (1000 * 60 * 60 * 24 * 30))
@@ -199,6 +204,7 @@ export function calcularKPIs(row) {
     idade_anos,
     acima_18_protegido,
     aniversario_no_mes,
+    recebeu_vt,
     oc_estab,
     oc_pcds,
     meses_contrato,
