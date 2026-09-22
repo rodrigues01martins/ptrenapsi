@@ -62,6 +62,14 @@ export const QUESTION_DEFINITIONS = [
   { id: 'q3',  texto: 'Você recebeu ou teve acesso à conta bancária utilizada para receber sua remuneração?', textoResumido: 'Acesso à conta bancária', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO, scored: true },
   { id: 'q4',  texto: 'Você participou da capacitação teórica inicial antes ou no início das atividades do Programa?', textoResumido: 'Capacitação teórica inicial', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO, scored: true },
 
+  // Bloco IRI (continuação) — modalidade do curso + questões condicionadas
+  // a ela. Agrupadas logo após q1-q4 para não ficarem isoladas no fim do
+  // formulário (mesmo bloco temático, mesma dimensão IRI).
+  { id: 'q21', texto: 'Você realiza o curso em qual modalidade?', textoResumido: 'Modalidade do curso', dimensao: 'CARACTERIZACAO', opcoes: OPCOES.EAD_PRESENCIAL, scored: false },
+  { id: 'q22', texto: 'Você recebeu o login e a senha para acessar a Plataforma do Curso Teórico?', textoResumido: 'Login e senha da plataforma', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO_NA, scored: true },
+  { id: 'q23', texto: 'Você recebeu o calendário dos cursos?', textoResumido: 'Recebimento do calendário', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO, scored: true },
+  { id: 'q24', texto: 'Você recebeu o acesso ao seu formulário de frequência?', textoResumido: 'Acesso ao formulário de frequência', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO, scored: true },
+
   { id: 'q5',  texto: 'Após o ingresso, você passou a realizar as atividades práticas em um órgão/local indicado pelo Programa?', textoResumido: 'Início das atividades práticas', dimensao: 'IRA', opcoes: OPCOES.SIM_NAO, scored: true },
   { id: 'q6',  texto: 'Você está realizando atividade teórica de aprendizagem pelo menos uma vez por semana?', textoResumido: 'Atividade teórica semanal', dimensao: 'IRA', opcoes: OPCOES.SIM_NAO, scored: true },
   { id: 'q7',  texto: 'Sua jornada no Programa está limitada a 4 horas por dia e 20 horas por semana?', textoResumido: 'Jornada dentro do limite', dimensao: 'IRA', opcoes: OPCOES.SIM_NAO, scored: true },
@@ -84,12 +92,6 @@ export const QUESTION_DEFINITIONS = [
 
   { id: 'q19', texto: 'Você já recebeu a primeira remuneração do Programa, caso a data prevista para o primeiro pagamento já tenha ocorrido?', textoResumido: 'Recebimento da primeira remuneração', dimensao: 'IEB', opcoes: OPCOES.RECEBEU_NAO_DEVIDA, scored: true },
   { id: 'q20', texto: 'Você sabe como solicitar atendimento ou acompanhamento da equipe da RENAPSI caso tenha alguma dificuldade pessoal, familiar, escolar ou relacionada ao trabalho?', textoResumido: 'Conhece o canal de apoio da RENAPSI', dimensao: 'IAA', opcoes: OPCOES.SIM_NAO, scored: true },
-
-  { id: 'q21', texto: 'Você realiza o curso em qual modalidade?', textoResumido: 'Modalidade do curso', dimensao: 'CARACTERIZACAO', opcoes: OPCOES.EAD_PRESENCIAL, scored: false },
-
-  { id: 'q22', texto: 'Você recebeu o login e a senha para acessar a Plataforma do Curso Teórico?', textoResumido: 'Login e senha da plataforma', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO_NA, scored: true },
-  { id: 'q23', texto: 'Você recebeu o calendário dos cursos?', textoResumido: 'Recebimento do calendário', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO, scored: true },
-  { id: 'q24', texto: 'Você recebeu o acesso ao seu formulário de frequência?', textoResumido: 'Acesso ao formulário de frequência', dimensao: 'IRI', opcoes: OPCOES.SIM_NAO, scored: true },
 ]
 
 export const TODAS_PERGUNTAS_PONTUADAS = QUESTION_DEFINITIONS.filter(q => q.scored)

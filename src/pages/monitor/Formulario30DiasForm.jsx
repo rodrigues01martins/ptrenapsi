@@ -301,10 +301,14 @@ export default function Formulario30DiasForm({ showToast }) {
             valor={respostas[q.id]}
             disabled={(q.id === 'q13' || q.id === 'q22') && !isApplicable(q.id, respostas)}
             mensagemDesabilitado={
+              // Texto descritivo, não numérico — a ordem de exibição das
+              // perguntas pode mudar (elas já foram reagrupadas por bloco
+              // temático uma vez), então referenciar "Q12"/"Q21" por
+              // posição seria frágil.
               q.id === 'q13'
-                ? 'Marcada automaticamente como NÃO SE APLICA — a Q12 indica que o aprendiz não necessita de transporte público.'
+                ? 'Marcada automaticamente como NÃO SE APLICA — a pergunta "Necessita utilizar transporte público?" indica que o aprendiz não necessita.'
                 : q.id === 'q22'
-                ? 'Marcada automaticamente como NÃO SE APLICA — a Q21 indica que o curso é realizado na modalidade presencial.'
+                ? 'Marcada automaticamente como NÃO SE APLICA — a pergunta "Modalidade do curso" indica que o curso é realizado na modalidade presencial.'
                 : undefined
             }
             onResponder={valor => {
