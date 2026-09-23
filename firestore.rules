@@ -39,7 +39,11 @@ service cloud.firestore {
         dados.canAccessEixo3 == false &&
         dados.canAccessEixo4 == false &&
         dados.canAccessFormulario30Dias == false &&
-        dados.canAccessPainel30Dias == false;
+        dados.canAccessPainel30Dias == false &&
+        dados.canAccessPesquisasSatisfacao == false &&
+        dados.canAccessPainelSatisfacao == false &&
+        dados.canAccessAvaliacaoPosPrograma == false &&
+        dados.canAccessPainelPosPrograma == false;
     }
 
     // ── Usuários ─────────────────────────────────────────────
@@ -191,6 +195,40 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create, update: if isAdmin() || hasPermission('canAccessFormulario30Dias');
       allow delete: if isAdmin();
+    }
+
+    // ── Pesquisas de Satisfação (Aprendiz/Mentor/Responsável) e
+    // Avaliação Pós-Programa (Egresso) — Monitoramento e Avaliação ────
+    // Mesmo modelo de leitura ampla já intencionalmente preservado nas
+    // demais coleções desta dimensão (ver nota em `ledger` acima) —
+    // quem restringe a visibilidade por tela é a navegação (canAccess*),
+    // não a regra de leitura. Escrita (create/update — a importação
+    // sempre faz upsert por sourceResponseId, nunca delete) exige a
+    // MESMA permissão já usada nos Formulários de importação
+    // correspondentes (seção 45: reaproveitar permissões existentes,
+    // sem criar RBAC nova além do par form/painel já usado em outras
+    // famílias desta dimensão, como eixo3/eixo4 e formulario30dias/
+    // painel30dias).
+    match /{collectionId}/{respostaId} {
+      allow read: if collectionId.matches('pesquisas_(aprendiz|mentor|responsavel)_respostas') && isAuthenticated();
+      allow create, update: if collectionId.matches('pesquisas_(aprendiz|mentor|responsavel)_respostas') &&
+        (isAdmin() || hasPermission('canAccessPesquisasSatisfacao'));
+      allow delete: if collectionId.matches('pesquisas_(aprendiz|mentor|responsavel)_respostas') && isAdmin();
+    }
+    match /pesquisas_egresso_respostas/{respostaId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() || hasPermission('canAccessAvaliacaoPosPrograma');
+      allow delete: if isAdmin();
+    }
+
+    // Histórico de importação das pesquisas (seção 43) — operacional,
+    // não é a auditoria global já descartada anteriormente no projeto.
+    // Qualquer uma das duas permissões de importação pode gravar, pois
+    // as duas Formulários gravam nesta mesma coleção compartilhada.
+    match /pesquisas_importacoes/{importacaoId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() || hasPermission('canAccessPesquisasSatisfacao') || hasPermission('canAccessAvaliacaoPosPrograma');
+      allow update, delete: if isAdmin();
     }
 
     // Rascunho do Relatório Final — documento único e compartilhado

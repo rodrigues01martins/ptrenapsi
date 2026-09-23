@@ -56,6 +56,10 @@ export function App() {
   const [canAccessEixo4, setCanAccessEixo4] = useState(false);
   const [canAccessFormulario30Dias, setCanAccessFormulario30Dias] = useState(false);
   const [canAccessPainel30Dias, setCanAccessPainel30Dias] = useState(false);
+  const [canAccessPesquisasSatisfacao, setCanAccessPesquisasSatisfacao] = useState(false);
+  const [canAccessPainelSatisfacao, setCanAccessPainelSatisfacao] = useState(false);
+  const [canAccessAvaliacaoPosPrograma, setCanAccessAvaliacaoPosPrograma] = useState(false);
+  const [canAccessPainelPosPrograma, setCanAccessPainelPosPrograma] = useState(false);
 
   // Lê papel/permissões do Firestore para o usuário logado
   useEffect(() => {
@@ -74,6 +78,10 @@ export function App() {
       setCanAccessEixo4(false);
       setCanAccessFormulario30Dias(false);
       setCanAccessPainel30Dias(false);
+      setCanAccessPesquisasSatisfacao(false);
+      setCanAccessPainelSatisfacao(false);
+      setCanAccessAvaliacaoPosPrograma(false);
+      setCanAccessPainelPosPrograma(false);
       return;
     }
     const bootstrapAdmin = user.email === BOOTSTRAP_ADMIN_EMAIL;
@@ -95,6 +103,10 @@ export function App() {
       setCanAccessEixo4(admin || data?.canAccessEixo4 === true);
       setCanAccessFormulario30Dias(admin || data?.canAccessFormulario30Dias === true);
       setCanAccessPainel30Dias(admin || data?.canAccessPainel30Dias === true);
+      setCanAccessPesquisasSatisfacao(admin || data?.canAccessPesquisasSatisfacao === true);
+      setCanAccessPainelSatisfacao(admin || data?.canAccessPainelSatisfacao === true);
+      setCanAccessAvaliacaoPosPrograma(admin || data?.canAccessAvaliacaoPosPrograma === true);
+      setCanAccessPainelPosPrograma(admin || data?.canAccessPainelPosPrograma === true);
     }).catch(() => {
       setIsAdmin(bootstrapAdmin);
       setCanAccessRelatorio(bootstrapAdmin);
@@ -110,6 +122,10 @@ export function App() {
       setCanAccessEixo4(bootstrapAdmin);
       setCanAccessFormulario30Dias(bootstrapAdmin);
       setCanAccessPainel30Dias(bootstrapAdmin);
+      setCanAccessPesquisasSatisfacao(bootstrapAdmin);
+      setCanAccessPainelSatisfacao(bootstrapAdmin);
+      setCanAccessAvaliacaoPosPrograma(bootstrapAdmin);
+      setCanAccessPainelPosPrograma(bootstrapAdmin);
     });
   }, [user]);
 
@@ -140,6 +156,10 @@ export function App() {
             canAccessEixo4: false,
             canAccessFormulario30Dias: false,
             canAccessPainel30Dias: false,
+            canAccessPesquisasSatisfacao: false,
+            canAccessPainelSatisfacao: false,
+            canAccessAvaliacaoPosPrograma: false,
+            canAccessPainelPosPrograma: false,
             createdAt: new Date().toISOString(),
           });
         }
@@ -432,6 +452,10 @@ export function App() {
           canAccessEixo4={canAccessEixo4}
           canAccessFormulario30Dias={canAccessFormulario30Dias}
           canAccessPainel30Dias={canAccessPainel30Dias}
+          canAccessPesquisasSatisfacao={canAccessPesquisasSatisfacao}
+          canAccessPainelSatisfacao={canAccessPainelSatisfacao}
+          canAccessAvaliacaoPosPrograma={canAccessAvaliacaoPosPrograma}
+          canAccessPainelPosPrograma={canAccessPainelPosPrograma}
           onGoHome={handleGoHome}
           onSignOut={handleSignOut}
           showToast={showToast}
