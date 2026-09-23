@@ -94,8 +94,16 @@ service cloud.firestore {
 
     // ── Usuários ─────────────────────────────────────────────
     match /users/{userId} {
-      // Qualquer autenticado pode ler (necessário para o painel de gestão)
-      allow read: if isAuthenticated();
+      // A coleção guarda e-mail, nome, função e todas as permissões
+      // individuais — leitura ampla para qualquer autenticado vazaria
+      // isso para usuários de outros módulos (ex.: alguém só do
+      // Acompanhamento Financeiro). Auditoria confirmou que só existem
+      // dois consumidores reais: App.tsx lê SEMPRE o próprio uid (nunca
+      // lista a coleção), e UserManagement.tsx lista todos, mas só é
+      // renderizado quando isAdmin (App.tsx: `{isAdmin ? <UserManagement
+      // .../> : ...}`) — endurecido para os dois casos reais, nunca
+      // "qualquer autenticado".
+      allow read: if isAdmin() || isOwner(userId);
       // Usuário só cria o próprio doc com privilégios zerados (role='user',
       // nenhuma permissão habilitada); admin cria qualquer usuário com
       // qualquer valor.

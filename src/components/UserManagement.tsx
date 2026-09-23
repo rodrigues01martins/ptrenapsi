@@ -1,55 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { collection, doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
-import { Users, Shield, ShieldOff, RefreshCw, Search, ChevronDown, X } from 'lucide-react';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { db, auth } from '../firebase';
+import { Users, Shield, ShieldOff, RefreshCw, Search, ChevronDown, X, UserPlus, KeyRound } from 'lucide-react';
 import { PageHeader } from './ui/PageHeader';
 import { KpiCard } from './ui/Card';
 import { TextInput } from './ui/FormField';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
-
-// Fonte única das permissões — a mesma usada em App.tsx/firestore.rules.
-// `group`/`subgroup` são só metadados de apresentação (como a Gestão de
-// Usuários organiza visualmente os toggles); não criam perfil nenhum e
-// não mudam a chave nem o significado de nenhuma permissão existente.
-// `subgroup` em Monitoramento e Avaliação espelha a navegação real do
-// módulo (Formulários × Painéis, Item 3) — não é um agrupamento novo.
-type PermissionKey =
-  | 'canAccessUpload' | 'canAccessGerencial' | 'canAccessRepasse' | 'canAccessHistorico'
-  | 'canAccessFrequencia' | 'canAccessAlcance' | 'canAccessEixo3' | 'canAccessEixo4'
-  | 'canAccessFormulario30Dias' | 'canAccessPainel30Dias'
-  | 'canAccessRelatorio'
-  | 'canAccessEntry' | 'canAccessReport';
-
-type AreaKey = 'Apuração Mensal' | 'Monitoramento e Avaliação' | 'Acompanhamento Financeiro';
-
-interface PermissionField {
-  key: PermissionKey;
-  label: string;
-  group: AreaKey;
-  subgroup?: 'Formulários' | 'Painéis';
-}
-
-const PERMISSION_FIELDS: PermissionField[] = [
-  { key: 'canAccessUpload',    label: 'Upload',    group: 'Apuração Mensal' },
-  { key: 'canAccessGerencial', label: 'Gerencial', group: 'Apuração Mensal' },
-  { key: 'canAccessRepasse',   label: 'Repasse',   group: 'Apuração Mensal' },
-  { key: 'canAccessHistorico', label: 'Histórico', group: 'Apuração Mensal' },
-
-  { key: 'canAccessEixo3',             label: 'Visita In Loco (Teórica e Prática)', group: 'Monitoramento e Avaliação', subgroup: 'Formulários' },
-  { key: 'canAccessFormulario30Dias',  label: 'Verificação Inicial — 30 Dias', group: 'Monitoramento e Avaliação', subgroup: 'Formulários' },
-  { key: 'canAccessRelatorio',         label: 'Relatório Final',               group: 'Monitoramento e Avaliação', subgroup: 'Formulários' },
-  { key: 'canAccessFrequencia',        label: 'Eixo 1 — Inclusão',             group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
-  { key: 'canAccessAlcance',           label: 'Eixo 2 — Alcance',              group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
-  { key: 'canAccessEixo4',             label: 'Visita In Loco (Teórica e Prática)', group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
-  { key: 'canAccessPainel30Dias',      label: 'Verificação Inicial — 30 Dias', group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
-
-  { key: 'canAccessEntry',  label: 'Novo Lançamento',                       group: 'Acompanhamento Financeiro' },
-  { key: 'canAccessReport', label: 'Acompanhar Despesa e Painel Financeiro', group: 'Acompanhamento Financeiro' },
-];
-
-const AREA_ORDER: AreaKey[] = ['Apuração Mensal', 'Monitoramento e Avaliação', 'Acompanhamento Financeiro'];
+import { CreateUserModal } from './CreateUserModal';
+import { PermissionKey, AreaKey, PermissionField, PERMISSION_FIELDS, AREA_ORDER, DEFAULT_PERMISSIONS } from '../config/permissions';
 
 type UserRecord = { uid: string; email: string; displayName?: string; role: string; createdAt?: string } & {
   [K in PermissionKey]: boolean;
@@ -80,6 +41,24 @@ function GerenciarPermissoesModal({ user, isCurrentUser, savingKey, onClose, onT
   const previamenteFocado = useRef<Element | null>(null);
   const botaoFecharRef = useRef<HTMLButtonElement>(null);
   const totalAtivos = contarAtivos(user, PERMISSION_FIELDS);
+  const [enviandoReset, setEnviandoReset] = useState(false);
+  const [resetStatus, setResetStatus] = useState<'ok' | 'erro' | null>(null);
+
+  // Reenvio de definição/redefinição de senha (seção 31) — nunca troca a
+  // sessão do administrador nem mostra/define senha nenhuma; usa
+  // exatamente o fluxo oficial do Firebase Authentication.
+  async function handleEnviarResetSenha() {
+    setEnviandoReset(true);
+    setResetStatus(null);
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      setResetStatus('ok');
+    } catch {
+      setResetStatus('erro');
+    } finally {
+      setEnviandoReset(false);
+    }
+  }
 
   useEffect(() => {
     previamenteFocado.current = document.activeElement;
@@ -154,6 +133,20 @@ function GerenciarPermissoesModal({ user, isCurrentUser, savingKey, onClose, onT
             </Button>
           </div>
 
+          {/* Redefinição de senha — nunca mostra/define senha, só dispara o e-mail oficial */}
+          <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Senha</p>
+              <p className="text-sm text-slate-700 mt-0.5">
+                {resetStatus === 'ok' ? 'E-mail de redefinição enviado.' : resetStatus === 'erro' ? 'Não foi possível enviar o e-mail.' : 'Definida pelo próprio usuário'}
+              </p>
+            </div>
+            <Button size="sm" variant="secondary" onClick={handleEnviarResetSenha} loading={enviandoReset}>
+              <KeyRound size={13} />
+              Enviar e-mail para redefinir senha
+            </Button>
+          </div>
+
           {user.role === 'admin' ? (
             <div className="p-4 rounded-xl bg-[var(--native-primary-light)] border border-[var(--native-primary)]/30 text-sm text-slate-700">
               Administradores têm acesso automático a todas as áreas do sistema — os toggles individuais não têm efeito enquanto a função for Administrador.
@@ -212,6 +205,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
   const [toast, setToast] = useState('');
   const [gerenciando, setGerenciando] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [criandoUsuario, setCriandoUsuario] = useState(false);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), snap => {
@@ -254,16 +248,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
         await updateDoc(ref, { [field]: !current });
       } else {
         const u = users.find(u => u.uid === uid);
-        const defaults = PERMISSION_FIELDS.reduce((acc, f) => {
-          acc[f.key] = false;
-          return acc;
-        }, {} as Record<PermissionKey, boolean>);
         await setDoc(ref, {
           uid,
           email: u?.email || '',
           displayName: u?.displayName || '',
           role: 'user',
-          ...defaults,
+          ...DEFAULT_PERMISSIONS,
           [field]: !current,
           createdAt: new Date().toISOString(),
         });
@@ -302,7 +292,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
         <PageHeader
           icon={<Users size={28} />}
           title="Gestão de Usuários"
-          description="Gerencie permissões de acesso dos usuários cadastrados"
+          description="Cadastre usuários e gerencie suas permissões de acesso."
+          actions={<Button size="sm" onClick={() => setCriandoUsuario(true)}><UserPlus size={14} /> Novo usuário</Button>}
         />
       </div>
 
@@ -341,13 +332,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
           <div className="p-8 text-center text-slate-400 text-sm">Carregando usuários...</div>
         ) : filtered.length === 0 ? (
           <EmptyState
-            title={users.length === 0 ? 'Nenhum usuário encontrado' : 'Nenhum usuário corresponde à busca'}
+            title={users.length === 0 ? 'Nenhum usuário cadastrado.' : 'Nenhum usuário corresponde à busca'}
             description={
               users.length === 0
-                ? 'Os documentos são criados automaticamente no primeiro login de cada usuário.'
+                ? 'Use "Novo usuário" para adicionar o primeiro acesso.'
                 : undefined
             }
-            action={users.length > 0 && search ? <Button size="sm" variant="ghost" onClick={() => setSearch('')}>Limpar busca</Button> : undefined}
+            action={
+              users.length === 0
+                ? <Button size="sm" onClick={() => setCriandoUsuario(true)}><UserPlus size={14} /> Novo usuário</Button>
+                : search ? <Button size="sm" variant="ghost" onClick={() => setSearch('')}>Limpar busca</Button> : undefined
+            }
           />
         ) : (
           <>
@@ -416,6 +411,23 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
           onClose={() => setGerenciando(null)}
           onTogglePermission={togglePermission}
           onToggleRole={toggleRole}
+        />
+      )}
+
+      {criandoUsuario && (
+        <CreateUserModal
+          onClose={() => setCriandoUsuario(false)}
+          onCreated={(novoUid, emailEnviado) => {
+            setCriandoUsuario(false);
+            showToast(
+              emailEnviado
+                ? 'Usuário criado. Um e-mail foi enviado para definição da senha. O usuário foi criado sem acessos liberados.'
+                : 'Usuário criado, mas não foi possível enviar o e-mail de definição de senha. Use "Enviar e-mail para redefinir senha" em Gerenciar para tentar novamente.'
+            );
+            // A lista já atualiza sozinha via onSnapshot — abrir "Gerenciar"
+            // direto evita um segundo clique para liberar o primeiro acesso.
+            setGerenciando(novoUid);
+          }}
         />
       )}
 

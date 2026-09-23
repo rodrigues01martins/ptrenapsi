@@ -17,6 +17,7 @@ import { ApuracaoMensal } from './components/ApuracaoMensal';
 import { MonitoramentoAvaliacao } from './components/MonitoramentoAvaliacao';
 import { BudgetItem, LedgerEntry } from './types';
 import { UserManagement } from './components/UserManagement';
+import { DEFAULT_PERMISSIONS } from './config/permissions';
 import { getSpentForItem as calcSpentForItem } from './lib/utils';
 
 type FinanceiroTab = 'entry' | 'despesas' | 'report' | 'itens';
@@ -143,23 +144,7 @@ export function App() {
             email: currentUser.email || '',
             displayName: currentUser.displayName || '',
             role: 'user',
-            canAccessRelatorio: false,
-            canAccessEntry: false,
-            canAccessReport: false,
-            canAccessUpload: false,
-            canAccessGerencial: false,
-            canAccessRepasse: false,
-            canAccessHistorico: false,
-            canAccessFrequencia: false,
-            canAccessAlcance: false,
-            canAccessEixo3: false,
-            canAccessEixo4: false,
-            canAccessFormulario30Dias: false,
-            canAccessPainel30Dias: false,
-            canAccessPesquisasSatisfacao: false,
-            canAccessPainelSatisfacao: false,
-            canAccessAvaliacaoPosPrograma: false,
-            canAccessPainelPosPrograma: false,
+            ...DEFAULT_PERMISSIONS,
             createdAt: new Date().toISOString(),
           });
         }
