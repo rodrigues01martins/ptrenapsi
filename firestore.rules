@@ -46,6 +46,52 @@ service cloud.firestore {
         dados.canAccessPainelPosPrograma == false;
     }
 
+    // ── Pesquisas de Satisfação / Avaliação Pós-Programa — helpers ──
+    // Diferente das demais coleções de Monitoramento e Avaliação, a
+    // leitura das pesquisas NÃO é ampla para qualquer autenticado: um
+    // usuário só do Acompanhamento Financeiro (ex.: só canAccessEntry)
+    // não pode ganhar acesso às respostas apenas por ter login — exige
+    // alguma autorização real sobre esta própria família (importar OU
+    // visualizar algum dos dois painéis).
+    function podeAcessarPesquisas() {
+      return isAdmin() ||
+        hasPermission('canAccessPesquisasSatisfacao') ||
+        hasPermission('canAccessAvaliacaoPosPrograma') ||
+        hasPermission('canAccessPainelSatisfacao') ||
+        hasPermission('canAccessPainelPosPrograma');
+    }
+
+    // Formato comum às 4 coleções de resposta — o mesmo código
+    // (normalizeRows.js + surveyFirestoreService.js) grava exatamente
+    // estes 13 campos para qualquer instrumento, sempre por sobrescrita
+    // integral do documento (nunca merge parcial); o único ponto que
+    // varia entre coleções é o valor fixo de `surveyType`.
+    function respostaDePesquisaValida(dados, tipoEsperado) {
+      return dados.keys().hasOnly([
+          'surveyType', 'schemaVersion', 'sourceResponseId', 'completedAt',
+          'startedAt', 'lastModifiedAt', 'municipalityCode', 'municipalityName',
+          'municipalityRaw', 'answers', 'source', 'importedAt', 'importId'
+        ]) &&
+        dados.surveyType == tipoEsperado &&
+        dados.sourceResponseId is string &&
+        dados.answers is map &&
+        dados.source == 'microsoft_forms_csv';
+    }
+
+    // Histórico de importação (seção 43) — o código real
+    // (surveyFirestoreService.js) cria este documento uma ÚNICA vez, já
+    // completo, ao final da importação — nunca em duas etapas. Por isso
+    // é tratado como imutável (ver `allow update, delete` na coleção).
+    function historicoDeImportacaoValido(dados) {
+      return dados.keys().hasOnly([
+          'surveyType', 'schemaVersion', 'arquivo', 'importadoEm',
+          'importadoPorUid', 'importadoPorEmail', 'totalLinhas', 'novos',
+          'atualizados', 'inalterados', 'invalidos', 'avisos'
+        ]) &&
+        dados.surveyType in ['ACTIVE_LEARNER', 'MENTOR', 'GUARDIAN', 'GRADUATE'] &&
+        dados.importadoPorUid == request.auth.uid;
+    }
+
     // ── Usuários ─────────────────────────────────────────────
     match /users/{userId} {
       // Qualquer autenticado pode ler (necessário para o painel de gestão)
@@ -199,36 +245,87 @@ service cloud.firestore {
 
     // ── Pesquisas de Satisfação (Aprendiz/Mentor/Responsável) e
     // Avaliação Pós-Programa (Egresso) — Monitoramento e Avaliação ────
-    // Mesmo modelo de leitura ampla já intencionalmente preservado nas
-    // demais coleções desta dimensão (ver nota em `ledger` acima) —
-    // quem restringe a visibilidade por tela é a navegação (canAccess*),
-    // não a regra de leitura. Escrita (create/update — a importação
-    // sempre faz upsert por sourceResponseId, nunca delete) exige a
-    // MESMA permissão já usada nos Formulários de importação
-    // correspondentes (seção 45: reaproveitar permissões existentes,
-    // sem criar RBAC nova além do par form/painel já usado em outras
-    // famílias desta dimensão, como eixo3/eixo4 e formulario30dias/
-    // painel30dias).
-    match /{collectionId}/{respostaId} {
-      allow read: if collectionId.matches('pesquisas_(aprendiz|mentor|responsavel)_respostas') && isAuthenticated();
-      allow create, update: if collectionId.matches('pesquisas_(aprendiz|mentor|responsavel)_respostas') &&
-        (isAdmin() || hasPermission('canAccessPesquisasSatisfacao'));
-      allow delete: if collectionId.matches('pesquisas_(aprendiz|mentor|responsavel)_respostas') && isAdmin();
+    // Escrita reaproveita a MESMA permissão já usada no Formulário de
+    // importação correspondente (nenhuma RBAC nova); helpers acima.
+    match /pesquisas_aprendiz_respostas/{respostaId} {
+      allow read: if podeAcessarPesquisas();
+      // sourceResponseId == id do próprio documento é a proteção central
+      // de identidade: como o documento já nasce com esse id, qualquer
+      // tentativa de gravar um valor de campo diferente do path é
+      // bloqueada na origem — nunca "mentor:100" viraria "mentor:999".
+      allow create: if (isAdmin() || hasPermission('canAccessPesquisasSatisfacao')) &&
+        respostaDePesquisaValida(request.resource.data, 'ACTIVE_LEARNER') &&
+        request.resource.data.sourceResponseId == respostaId;
+      // Reimportação (seção 31): conteúdo pode ser corrigido, mas
+      // sourceResponseId e surveyType — a identidade lógica da resposta
+      // (seção 16) — têm que continuar iguais aos já persistidos.
+      allow update: if (isAdmin() || hasPermission('canAccessPesquisasSatisfacao')) &&
+        respostaDePesquisaValida(request.resource.data, 'ACTIVE_LEARNER') &&
+        request.resource.data.sourceResponseId == resource.data.sourceResponseId &&
+        request.resource.data.surveyType == resource.data.surveyType;
+      // O fluxo de importação nunca exclui (seção 13/30) — delete
+      // permanece só para admin, mesmo padrão de correção manual já
+      // usado em todas as demais coleções desta dimensão (visitas_inloco,
+      // colaboradores_*, verificacao30dias_*), mesmo sem botão de
+      // excluir na tela.
+      allow delete: if isAdmin();
     }
+
+    match /pesquisas_mentor_respostas/{respostaId} {
+      allow read: if podeAcessarPesquisas();
+      allow create: if (isAdmin() || hasPermission('canAccessPesquisasSatisfacao')) &&
+        respostaDePesquisaValida(request.resource.data, 'MENTOR') &&
+        request.resource.data.sourceResponseId == respostaId;
+      allow update: if (isAdmin() || hasPermission('canAccessPesquisasSatisfacao')) &&
+        respostaDePesquisaValida(request.resource.data, 'MENTOR') &&
+        request.resource.data.sourceResponseId == resource.data.sourceResponseId &&
+        request.resource.data.surveyType == resource.data.surveyType;
+      allow delete: if isAdmin();
+    }
+
+    match /pesquisas_responsavel_respostas/{respostaId} {
+      allow read: if podeAcessarPesquisas();
+      allow create: if (isAdmin() || hasPermission('canAccessPesquisasSatisfacao')) &&
+        respostaDePesquisaValida(request.resource.data, 'GUARDIAN') &&
+        request.resource.data.sourceResponseId == respostaId;
+      allow update: if (isAdmin() || hasPermission('canAccessPesquisasSatisfacao')) &&
+        respostaDePesquisaValida(request.resource.data, 'GUARDIAN') &&
+        request.resource.data.sourceResponseId == resource.data.sourceResponseId &&
+        request.resource.data.surveyType == resource.data.surveyType;
+      allow delete: if isAdmin();
+    }
+
     match /pesquisas_egresso_respostas/{respostaId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAdmin() || hasPermission('canAccessAvaliacaoPosPrograma');
+      allow read: if podeAcessarPesquisas();
+      allow create: if (isAdmin() || hasPermission('canAccessAvaliacaoPosPrograma')) &&
+        respostaDePesquisaValida(request.resource.data, 'GRADUATE') &&
+        request.resource.data.sourceResponseId == respostaId;
+      allow update: if (isAdmin() || hasPermission('canAccessAvaliacaoPosPrograma')) &&
+        respostaDePesquisaValida(request.resource.data, 'GRADUATE') &&
+        request.resource.data.sourceResponseId == resource.data.sourceResponseId &&
+        request.resource.data.surveyType == resource.data.surveyType;
       allow delete: if isAdmin();
     }
 
     // Histórico de importação das pesquisas (seção 43) — operacional,
     // não é a auditoria global já descartada anteriormente no projeto.
-    // Qualquer uma das duas permissões de importação pode gravar, pois
-    // as duas Formulários gravam nesta mesma coleção compartilhada.
+    // Tratado como IMUTÁVEL mesmo para admin (ver helper acima e nota da
+    // seção 29 desta manutenção): diferente das coleções de resposta,
+    // que são registros substantivos corrigíveis por admin como em todo
+    // o resto do módulo, aqui o valor do registro está justamente em
+    // nunca poder ser alterado depois de escrito.
     match /pesquisas_importacoes/{importacaoId} {
-      allow read: if isAuthenticated();
-      allow create: if isAdmin() || hasPermission('canAccessPesquisasSatisfacao') || hasPermission('canAccessAvaliacaoPosPrograma');
-      allow update, delete: if isAdmin();
+      allow read: if podeAcessarPesquisas();
+      // A permissão exigida acompanha o surveyType declarado no próprio
+      // registro — quem só importa Egresso não grava histórico de
+      // Mentor, por exemplo.
+      allow create: if historicoDeImportacaoValido(request.resource.data) && (
+        (request.resource.data.surveyType in ['ACTIVE_LEARNER', 'MENTOR', 'GUARDIAN'] &&
+          (isAdmin() || hasPermission('canAccessPesquisasSatisfacao'))) ||
+        (request.resource.data.surveyType == 'GRADUATE' &&
+          (isAdmin() || hasPermission('canAccessAvaliacaoPosPrograma')))
+      );
+      allow update, delete: if false;
     }
 
     // Rascunho do Relatório Final — documento único e compartilhado
