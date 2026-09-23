@@ -55,3 +55,17 @@ export const sempreAplicavel = () => true
 // falar com a RENAPSI", 0 = "nunca tive acesso ao conteúdo EAD"). Usado
 // pelas regras especiais das seções 30-33.
 export const excluirCodigo = (codigoExcluido) => (codigo) => codigo !== codigoExcluido
+
+// Extrai o código numérico normalmente, mas trata como código 0 as
+// variantes textuais de "nunca precisei/nunca precisa" que aparecem SEM
+// prefixo numérico no CSV real de Mentor (diferente de Aprendiz/
+// Responsável, cuja mesma pergunta de atendimento já vem como
+// "0 - Nunca precisei..."). Mesmo sentinela de N/A da seção 33 — só
+// muda a forma como o texto chega no arquivo real deste instrumento.
+export function extrairCodigoComFallbackNuncaPrecisei(valorBruto) {
+  const codigo = extractNumericCode(valorBruto)
+  if (codigo !== null) return codigo
+  const texto = String(valorBruto ?? '').trim().toLowerCase()
+  if (texto.startsWith('nunca precis')) return 0
+  return null
+}

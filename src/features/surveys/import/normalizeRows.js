@@ -73,8 +73,10 @@ export function normalizarLinhas(schema, dados, colunaPorHeader) {
         return
       }
 
-      // type === 'coded'
-      const codigo = extractNumericCode(valorBruto)
+      // type === 'coded' — usa o parser específico da questão quando
+      // definido (ex.: Mentor Q11, cuja opção de N/A vem sem prefixo
+      // numérico no CSV real), senão o extrator genérico.
+      const codigo = questao.parse ? questao.parse(valorBruto) : extractNumericCode(valorBruto)
       const bruto = (valorBruto ?? '').toString().trim()
       // Código inválido só é erro bloqueante DA LINHA quando a questão é
       // usada em algum indicador (scored) e o valor não estava vazio

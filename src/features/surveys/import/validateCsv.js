@@ -95,17 +95,25 @@ export function validarEstruturaCsv(schema, dados) {
     })
   }
 
-  // Posição — validação SECUNDÁRIA (seção 19): diverge vira aviso, nunca
-  // bloqueia sozinha.
-  schema.questions.forEach(q => {
-    const encontrada = questoesReconhecidas.get(q.id)
-    if (encontrada && encontrada.position !== (q.position - 1)) {
-      avisos.push({
-        chave: 'posicao_divergente',
-        mensagem: `Questão ${q.id.toUpperCase()} ("${q.aliases[0]}") foi reconhecida pelo texto do cabeçalho, mas está em posição diferente da esperada — apenas aviso, não impede a importação.`,
-      })
-    }
-  })
+  // Posição — validação SECUNDÁRIA (seção 19): compara a ORDEM RELATIVA
+  // das questões reconhecidas entre si, nunca o índice absoluto da
+  // coluna — os metadados do Forms (Id, Hora de início/conclusão,
+  // Email, Nome) sempre precedem as questões, então o índice bruto de
+  // Q1 nunca é 0 na prática; comparar contra `position - 1` gerava
+  // aviso falso em toda questão, mesmo com o arquivo perfeitamente
+  // ordenado. Diverge vira aviso único, nunca bloqueia sozinho.
+  const ordemEsperada = schema.questions.map(q => q.id)
+  const ordemEncontrada = [...questoesReconhecidas.entries()]
+    .sort((a, b) => a[1].position - b[1].position)
+    .map(([id]) => id)
+  const mesmaOrdem = ordemEncontrada.length === ordemEsperada.length &&
+    ordemEncontrada.every((id, i) => id === ordemEsperada[i])
+  if (!mesmaOrdem) {
+    avisos.push({
+      chave: 'ordem_divergente',
+      mensagem: 'A ordem das questões reconhecidas no arquivo é diferente da ordem esperada pelo schema — apenas aviso, não impede a importação (a identificação de cada questão continua sendo feita pelo texto do cabeçalho, não pela posição).',
+    })
+  }
 
   // IDs duplicados no arquivo — erro estrutural (seção 38).
   const idHeader = [...colunaPorHeader.entries()].find(([, c]) => c.tipo === 'metadado' && c.campo.key === 'sourceResponseId')?.[0]
