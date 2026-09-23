@@ -1,6 +1,6 @@
 import { db } from '../../../firebase'
 import {
-  collection, doc, getDocs, query, where,
+  collection, doc, getDocs, getCountFromServer, query, where,
   writeBatch, serverTimestamp,
 } from 'firebase/firestore'
 
@@ -35,6 +35,15 @@ export async function buscarRespostas(surveyType) {
   const respostas = []
   snap.forEach(d => respostas.push({ _idDocumento: d.id, ...d.data() }))
   return respostas
+}
+
+// Contagem via agregação do servidor — nunca baixa os documentos
+// inteiros só para exibir "N respostas disponíveis" no card (seção 35 da
+// manutenção de UX do dropzone: metadado de exibição não pode custar uma
+// leitura completa da coleção).
+export async function contarRespostas(surveyType) {
+  const snap = await getCountFromServer(collection(db, nomeColecaoRespostas(surveyType)))
+  return snap.data().count
 }
 
 export async function buscarUltimaImportacao(surveyType) {

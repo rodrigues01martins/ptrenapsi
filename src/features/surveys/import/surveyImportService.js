@@ -3,16 +3,16 @@ import { validarArquivo } from '../../../services/uploadValidationService'
 import { validarEstruturaCsv } from './validateCsv'
 import { normalizarLinhas } from './normalizeRows'
 import { classificarImportacao } from './classifyImport'
-import { buscarRespostas, confirmarImportacaoPesquisa, buscarUltimaImportacao } from './surveyFirestoreService'
+import { buscarRespostas, confirmarImportacaoPesquisa, buscarUltimaImportacao, contarRespostas } from './surveyFirestoreService'
 
 // ============================================================
-// ORQUESTRAÇÃO DA IMPORTAÇÃO — usado pela UI (SurveyUploadFlow)
+// ORQUESTRAÇÃO DA IMPORTAÇÃO — usado pela UI (SurveyCsvDropzone)
 // ============================================================
 // Reaproveita conceitualmente o fluxo SELECIONAR → VALIDAR → REVISAR →
 // CONFIRMAR → IMPORTAR (seção 8), com o mesmo parser CSV já usado na
 // Apuração Mensal (seção 109 — reutilizar parser/validação quando
 // apropriado, sem misturar os dados dos dois domínios).
-export { buscarRespostas, buscarUltimaImportacao }
+export { buscarRespostas, buscarUltimaImportacao, contarRespostas }
 
 export async function validarESimularImportacao(schema, file) {
   const arquivoCheck = validarArquivo(file)

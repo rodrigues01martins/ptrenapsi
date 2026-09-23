@@ -1,4 +1,4 @@
-import SurveyImportCard from '../../components/monitor/surveys/SurveyImportCard'
+import SurveyCsvDropzone from '../../components/monitor/surveys/SurveyCsvDropzone'
 import { GRADUATE_SCHEMA } from '../../features/surveys/schemas'
 
 // ============================================================
@@ -19,7 +19,7 @@ export default function AvaliacaoPosProgramaImport() {
         </p>
       </div>
 
-      <SurveyImportCard schema={GRADUATE_SCHEMA} />
+      <SurveyCsvDropzone schema={GRADUATE_SCHEMA} />
     </div>
   )
 }

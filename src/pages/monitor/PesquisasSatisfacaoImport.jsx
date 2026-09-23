@@ -1,4 +1,4 @@
-import SurveyImportCard from '../../components/monitor/surveys/SurveyImportCard'
+import SurveyCsvDropzone from '../../components/monitor/surveys/SurveyCsvDropzone'
 import { ACTIVE_LEARNER_SCHEMA, MENTOR_SCHEMA, GUARDIAN_SCHEMA } from '../../features/surveys/schemas'
 
 // ============================================================
@@ -21,10 +21,13 @@ export default function PesquisasSatisfacaoImport() {
         </p>
       </div>
 
+      {/* Os três dropzones ficam sempre visíveis, lado a lado — nunca em
+          accordion que colapse as demais pesquisas (seção 6 da
+          manutenção de UX). Cada card mantém estado independente. */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <SurveyImportCard schema={ACTIVE_LEARNER_SCHEMA} />
-        <SurveyImportCard schema={MENTOR_SCHEMA} />
-        <SurveyImportCard schema={GUARDIAN_SCHEMA} />
+        <SurveyCsvDropzone schema={ACTIVE_LEARNER_SCHEMA} />
+        <SurveyCsvDropzone schema={MENTOR_SCHEMA} />
+        <SurveyCsvDropzone schema={GUARDIAN_SCHEMA} />
       </div>
     </div>
   )
