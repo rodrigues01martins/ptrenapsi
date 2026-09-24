@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Upload } from 'lucide-react';
 import { BudgetItem, LedgerEntry } from '../types';
 import { fmt, formatDateForInput, fileToDataUrl } from '../lib/utils';
+import { useCurrencyInput } from '../hooks/useCurrencyInput';
 import { Button } from './ui/Button';
 import { TextInput, Select, Textarea } from './ui/FormField';
 
@@ -20,7 +21,8 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
   const [nf, setNf] = useState('');
   const [supplier, setSupplier] = useState('');
   const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState<number | null>(null);
+  const amountField = useCurrencyInput({ value: amount, onValueChange: setAmount });
   const [date, setDate] = useState('');
   const [auditComment, setAuditComment] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -32,7 +34,8 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
       setNf(entry.nf);
       setSupplier(entry.supplier);
       setDescription(entry.description);
-      setAmount(entry.amount.toString());
+      setAmount(entry.amount);
+      amountField.reset(entry.amount);
       setDate(formatDateForInput(entry.date));
       setAuditComment(entry.auditComment || '');
       setDocumentRemoved(false);
@@ -49,6 +52,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (amount === null) return; // defesa extra — o "required" do campo já bloqueia o submit nativo
 
     let documentName = documentRemoved ? '' : (entry.documentName || '');
     let documentData = documentRemoved ? '' : (entry.documentData || '');
@@ -72,7 +76,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
       supplier,
       description,
       auditComment,
-      amount: parseFloat(amount),
+      amount,
       date: date.split('-').reverse().join('/'),
       category: budgetItem?.category || entry.category,
       group: budgetItem?.group || entry.group,
@@ -182,11 +186,10 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, bu
                 <TextInput
                   label="Valor (R$)"
                   className="font-bold"
-                  value={amount}
-                  onChange={e => setAmount(e.target.value)}
+                  type="text"
+                  placeholder="0,00"
                   required
-                  step="0.01"
-                  type="number"
+                  {...amountField.fieldProps}
                 />
                 <TextInput
                   label="Data"

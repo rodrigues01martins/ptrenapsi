@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, Tag, Truck, FileText, FileUp, DollarSign, AlignLeft } from 'lucide-react';
 import { BudgetItem } from '../types';
+import { useCurrencyInput } from '../hooks/useCurrencyInput';
 
 interface ExpenseFormProps {
   budgetItems: BudgetItem[];
@@ -13,11 +14,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
     itemCode: '',
     supplier: '',
     nf: '',
-    amount: '',
     date: new Date().toISOString().split('T')[0],
     description: '',
     documentData: ''
   });
+  const [amount, setAmount] = useState<number | null>(null);
+  const amountField = useCurrencyInput({ value: amount, onValueChange: setAmount });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -38,7 +40,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.itemCode || !formData.amount || !formData.date) {
+    if (!formData.itemCode || amount === null || !formData.date) {
       showToast("Preencha Item, Valor e Data.");
       return;
     }
@@ -47,13 +49,14 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
     onAdd({
       ...formData,
       date: formattedDate,
-      amount: parseFloat(formData.amount.replace(',', '.')),
+      amount,
     });
     setFormData({
-      itemCode: '', supplier: '', nf: '', amount: '',
+      itemCode: '', supplier: '', nf: '',
       date: new Date().toISOString().split('T')[0],
       description: '', documentData: ''
     });
+    amountField.reset(null);
   };
 
   return (
@@ -122,8 +125,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ budgetItems, onAdd, sh
           </label>
           <input
             type="text" placeholder="0,00"
-            value={formData.amount}
-            onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+            {...amountField.fieldProps}
             className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm font-bold text-[#007770]"
           />
         </div>

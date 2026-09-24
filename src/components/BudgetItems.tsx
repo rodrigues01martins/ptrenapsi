@@ -3,6 +3,7 @@ import { addDoc, deleteDoc, doc, setDoc, updateDoc, collection } from 'firebase/
 import { db } from '../firebase';
 import { BudgetItem } from '../types';
 import { fmt } from '../lib/utils';
+import { useCurrencyInput } from '../hooks/useCurrencyInput';
 import { ClipboardList, Plus, Trash2, Edit, X, Check } from 'lucide-react';
 import { PageHeader } from './ui/PageHeader';
 import { KpiCard } from './ui/Card';
@@ -15,10 +16,12 @@ interface BudgetItemsProps {
   showToast: (message: string) => void;
 }
 
-const emptyForm = { id: '', stage: '', group: '', category: '', desc: '', value: '' };
+const emptyForm = { id: '', stage: '', group: '', category: '', desc: '' };
 
 export const BudgetItems: React.FC<BudgetItemsProps> = ({ budgetItems, showToast }) => {
   const [form, setForm] = useState(emptyForm);
+  const [value, setValue] = useState<number | null>(null);
+  const valueField = useCurrencyInput({ value, onValueChange: setValue });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const totalPrevisto = budgetItems.reduce((acc, i) => acc + (i.value || 0), 0);
@@ -26,6 +29,7 @@ export const BudgetItems: React.FC<BudgetItemsProps> = ({ budgetItems, showToast
   const resetForm = () => {
     setForm(emptyForm);
     setEditingId(null);
+    valueField.reset(null);
   };
 
   const startEdit = (item: BudgetItem) => {
@@ -36,14 +40,13 @@ export const BudgetItems: React.FC<BudgetItemsProps> = ({ budgetItems, showToast
       group: item.group,
       category: item.category,
       desc: item.desc,
-      value: String(item.value),
     });
+    valueField.reset(item.value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const value = parseFloat(form.value.replace(',', '.'));
-    if (!form.stage || !form.group || !form.category || !form.desc || Number.isNaN(value)) {
+    if (!form.stage || !form.group || !form.category || !form.desc || value === null) {
       showToast('Preencha etapa, grupo, categoria, descrição e valor.');
       return;
     }
@@ -139,8 +142,7 @@ export const BudgetItems: React.FC<BudgetItemsProps> = ({ budgetItems, showToast
             variant="filled"
             className="font-bold text-[var(--native-primary)]"
             type="text" placeholder="0,00"
-            value={form.value}
-            onChange={e => setForm(p => ({ ...p, value: e.target.value }))}
+            {...valueField.fieldProps}
           />
           <div className="md:col-span-2">
             <TextInput
