@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { randomBytes } from 'crypto';
-import { getAdminAuth, getAdminFirestore } from '../_lib/firebaseAdmin';
-import { requireAdmin, HttpError } from '../_lib/requireAdmin';
-import { DEFAULT_PERMISSIONS } from '../../src/config/permissions';
+import { getAdminAuth, getAdminFirestore } from '../_lib/firebaseAdmin.js';
+import { requireAdmin, HttpError } from '../_lib/requireAdmin.js';
+import { DEFAULT_PERMISSIONS } from '../../src/config/permissions.js';
 
 // ============================================================
 // POST /api/admin/create-user

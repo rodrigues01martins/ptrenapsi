@@ -1,5 +1,5 @@
 import type { VercelRequest } from '@vercel/node';
-import { getAdminAuth, getAdminFirestore } from './firebaseAdmin';
+import { getAdminAuth, getAdminFirestore } from './firebaseAdmin.js';
 
 // Erro com status HTTP explícito — o handler só precisa repassar
 // `status`/`message` para a resposta, sem duplicar a lógica de mapeamento.
