@@ -47,7 +47,7 @@ function formatarPeriodoMensal(periodo) {
 }
 
 export default function PainelGeralIndicadores() {
-  const { loading, resultadosPorSigla, periodos, ultimaAtualizacaoPesquisas, erros } = useGeneralIndicators();
+  const { loading, resultadosPorSigla, periodos, ultimaAtualizacaoPesquisas } = useGeneralIndicators();
 
   const agrupado = useMemo(() => {
     return ORDEM_DIMENSOES.map(grupo => ({
@@ -261,19 +261,6 @@ export default function PainelGeralIndicadores() {
           <li>Referência temporal: Pesquisas de Satisfação e Análises Transversais são semestrais; Avaliação Pós-Programa (Egresso) é anual; Execução do Programa e Verificação Inicial — 30 Dias são mensais. As Análises Transversais que comparam resultados de Egresso (ATDS, ATIF, ATER) combinam uma fonte anual com fontes semestrais — este relatório identifica essa diferença de janela em vez de tratá-las como contemporâneas.</li>
           <li>Verificação Inicial — 30 Dias: a apuração considera somente formulários efetivamente concluídos; rascunhos não são contabilizados.</li>
           <li>Visita In Loco (Teórica e Prática): não constam como registros autônomos na matriz de 44 indicadores recebida — os painéis específicos continuam disponíveis separadamente em Monitoramento e Avaliação → Painéis.</li>
-        </ul>
-      </section>
-
-      {/* ── 5. LIMITAÇÕES DOS DADOS ── */}
-      <section style={{ marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}>5. Limitações dos Dados</h2>
-        <ul style={{ fontSize: '13px', lineHeight: 1.8, color: '#334155', paddingLeft: '18px' }}>
-          {!periodos.execucao && <li>Nenhuma competência de Apuração Mensal foi importada ainda — os indicadores de Execução do Programa (QAA, PVP, IFM, TEP, TRV, IAG) estão marcados como Não apurado.</li>}
-          {!periodos.verificacao30 && <li>Nenhum período de Verificação Inicial — 30 Dias foi aplicado ainda — os indicadores IRI, IRA, IEB, IAA e IACA estão marcados como Não apurado.</li>}
-          {erros.execucao && <li>Falha ao carregar os dados de Execução do Programa: {erros.execucao}.</li>}
-          {erros.verificacao30 && <li>Falha ao carregar os dados de Verificação Inicial — 30 Dias: {erros.verificacao30}.</li>}
-          <li>O modelo de dados atual da Apuração Mensal não distingue transferências internas de novas admissões efetivas nem de desligamentos que não liberam vaga — o cálculo de TRV trata toda admissão e todo desligamento dentro da competência como efetivos, uma aproximação razoável na ausência desse campo específico no CSV de origem.</li>
-          <li>Este relatório não produz conclusões automáticas de causalidade ou efetividade — os resultados devem ser interpretados à luz da definição operacional e das metas de cada indicador.</li>
         </ul>
       </section>
 
