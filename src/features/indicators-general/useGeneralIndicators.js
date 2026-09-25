@@ -149,9 +149,10 @@ export function useGeneralIndicators() {
       mapa.IAG = montarResultado('IAG', execucao.resultado.iag);
     }
 
-    // Verificação Inicial — 30 Dias (5 registros)
+    // Verificação Inicial — 30 Dias (5 registros) — calculateAllIndicators
+    // retorna um objeto { [id]: resultado }, não um array.
     if (verificacao30.indicadores) {
-      for (const ind of verificacao30.indicadores) {
+      for (const ind of Object.values(verificacao30.indicadores)) {
         mapa[ind.id] = montarResultado(ind.id, ind.percentual, { positivas: ind.positivas, baseValida: ind.baseValida });
       }
     }
