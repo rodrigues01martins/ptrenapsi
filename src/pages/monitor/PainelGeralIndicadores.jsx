@@ -277,15 +277,6 @@ export default function PainelGeralIndicadores() {
         </ul>
       </section>
 
-      {/* ── Ficha técnica adicional: correspondência com painéis já existentes ── */}
-      <section className="no-print" style={{ marginBottom: '16px', padding: '12px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px' }}>
-        <p style={{ fontSize: '12px', color: '#78350f' }}>
-          <strong>Nota técnica:</strong> o card "Reposição de Vagas" hoje exibido no painel Eixo 1 — Inclusão usa uma
-          fórmula anterior à homologação (contratos iniciados ÷ contratos finalizados) e não foi alterado por esta
-          manutenção. O TRV apresentado aqui segue a definição homologada na matriz oficial (vagas ociosas na abertura
-          + desligamentos efetivos ÷ novas admissões efetivas) e pode divergir do valor daquele card.
-        </p>
-      </section>
     </div>
   );
 }

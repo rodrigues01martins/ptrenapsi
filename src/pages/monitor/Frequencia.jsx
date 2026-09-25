@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreService'
 import { enriquecerDados, calcularAgregados, formatarPeriodo, selecionarPorFlag } from '../../services/csvService'
 import { baseFinanceira, baseGerencial } from '../../services/classificacaoService'
+import { calcularPVPeTRV } from '../../services/indicadoresExecucaoService'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import ChartCard from '../../components/monitor/ui/ChartCard'
 import Loader from '../../components/monitor/ui/Loader'
@@ -41,7 +42,10 @@ const ICONS = {
 }
 
 function GaugeCard({ label, value, sub, meta, color = 'blue', icon, onDetails }) {
-  const pct = Math.min(value, 100)
+  // value pode ser null quando o indicador é "Não aplicável" (ex.: TRV sem
+  // nenhuma vaga disponível na competência) — nunca convertido em 0.
+  const naoAplicavel = value === null || value === undefined
+  const pct = naoAplicavel ? 0 : Math.min(value, 100)
   const colorMap = {
     blue:   'var(--brand-primary)',
     green:  'var(--status-success-text)',
@@ -81,7 +85,7 @@ function GaugeCard({ label, value, sub, meta, color = 'blue', icon, onDetails })
       </div>
 
       <p style={{ fontSize: '28px', fontWeight: 700, lineHeight: '32px', letterSpacing: '-0.02em', color: barColor, fontFamily: 'var(--font-family)', marginBottom: '6px' }}>
-        {value.toFixed(1)}%
+        {naoAplicavel ? 'Não aplicável' : `${value.toFixed(1)}%`}
       </p>
 
       {sub && <p style={{ fontSize: '13px', color: 'var(--text-muted)', fontFamily: 'var(--font-family)', marginBottom: '12px' }}>{sub}</p>}
@@ -179,20 +183,32 @@ export default function Frequencia() {
       faltas: r._kpis.total_faltas
     }))
 
-  // 4. Reposição de vagas
-  const ind_reposicao = agregados.contratos_finalizados > 0
-    ? (agregados.contratos_iniciados / agregados.contratos_finalizados) * 100
-    : 0
+  // 4. Reposição de vagas (TRV) — fórmula homologada na matriz oficial
+  // (Memória PVP e TRV), não mais contratos_iniciados ÷ contratos_finalizados:
+  // TRV = novas admissões efetivas ÷ [(5.000 − ativos na abertura do mês) +
+  // desligamentos efetivos no mês]. "Não aplicável" (null) quando não há
+  // nenhuma vaga disponível na competência — nunca 0% nem erro. Como o CSV
+  // de origem não distingue transferência interna de admissão/desligamento
+  // efetivo, toda admissão e todo desligamento dentro do mês são tratados
+  // como efetivos — aproximação razoável na ausência desse campo.
+  const { ativosAbertura, desligamentosEfetivos, novasAdmissoes, vagasDisponiveis, trv: ind_reposicao } =
+    calcularPVPeTRV(dadosEnriquecidos)
 
   // Cor semântica por meta
   const corEvasao    = ind_evasao <= 15 ? 'green' : 'danger'
-  const corReposicao = ind_reposicao < 50 ? 'green' : 'danger'
+  const corReposicao = ind_reposicao === null ? 'blue' : (ind_reposicao > 50 ? 'green' : 'danger')
 
   // Listas de drill-down — sempre derivadas do MESMO array e MESMO flag
   // usados pelo agregado (calcularAgregados), nunca um filtro paralelo.
   const registrosEvasao      = selecionarPorFlag(dadosFinanceiros, 'evasao')
   const registrosIniciados   = selecionarPorFlag(dadosFinanceiros, 'contrato_iniciado')
   const registrosFinalizados = selecionarPorFlag(dadosFinanceiros, 'contrato_finalizado')
+
+  // Composição do TRV — usa os MESMOS flags de _classificacao (persistidos
+  // na ingestão) que calcularPVPeTRV consome, não os flags _kpis acima
+  // (que servem às demais métricas desta tela).
+  const registrosNovasAdmissoes = dadosEnriquecidos.filter(r => r._classificacao?.admitidoNoMes)
+  const registrosDesligamentosEfetivos = dadosEnriquecidos.filter(r => r._classificacao?.desligadoNoMes || r._classificacao?.terminoNoMes)
 
   return (
     <div>
@@ -290,10 +306,12 @@ export default function Frequencia() {
         />
         <GaugeCard
           icon={<SvgIcon path={ICONS.reposicao} />}
-          label="Reposição de Vagas"
+          label="Reposição de Vagas (TRV)"
           value={ind_reposicao}
-          sub={`${agregados.contratos_iniciados} entradas para ${agregados.contratos_finalizados} saídas`}
-          meta="Meta: < 50% das vagas liberadas repostas"
+          sub={vagasDisponiveis > 0
+            ? `${novasAdmissoes} admissões efetivas de ${vagasDisponiveis} vagas disponíveis`
+            : 'Nenhuma vaga disponível na competência'}
+          meta="Meta: superior a 50% das vagas disponíveis repostas"
           color={corReposicao}
           onDetails={() => setDrill('reposicao')}
         />
@@ -375,21 +393,33 @@ export default function Frequencia() {
         {drill === 'reposicao' && (
           <>
             <DrilldownComposicao itens={[
-              { label: 'Entradas', valor: agregados.contratos_iniciados },
-              { label: 'Saídas', valor: agregados.contratos_finalizados },
-              { label: 'Resultado', valor: `${ind_reposicao.toFixed(1)}%`, destaque: true },
+              { label: 'Ativos na abertura do mês', valor: ativosAbertura },
+              { label: 'Vagas ociosas na abertura (5.000 − ativos)', valor: VAGAS_TOTAL - ativosAbertura },
+              { label: 'Desligamentos efetivos no mês', valor: desligamentosEfetivos },
+              { label: 'Vagas disponíveis na competência', valor: vagasDisponiveis },
+              { label: 'Novas admissões efetivas', valor: novasAdmissoes },
+              { label: 'Resultado', valor: ind_reposicao === null ? 'Não aplicável' : `${ind_reposicao.toFixed(1)}%`, destaque: true },
             ]} />
-            <DrilldownFormula texto={`${agregados.contratos_iniciados} entradas ÷ ${agregados.contratos_finalizados} saídas × 100 = ${ind_reposicao.toFixed(1)}%`} />
+            <DrilldownFormula texto={
+              vagasDisponiveis > 0
+                ? `${novasAdmissoes} admissões efetivas ÷ [(5.000 − ${ativosAbertura}) + ${desligamentosEfetivos}] × 100 = ${ind_reposicao.toFixed(1)}%`
+                : `(5.000 − ${ativosAbertura}) + ${desligamentosEfetivos} = 0 vagas disponíveis → Não aplicável`
+            } />
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', fontFamily: 'var(--font-family)' }}>
+              Aproximação metodológica: o CSV de origem não distingue transferências internas de admissões e
+              desligamentos efetivos — toda admissão e todo desligamento ocorridos dentro da competência são
+              tratados como efetivos para este cálculo.
+            </p>
             <p style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontFamily: 'var(--font-family)' }}>
-              Entradas consideradas
+              Novas admissões consideradas
             </p>
             <div style={{ marginBottom: '20px' }}>
-              <DrilldownLista colunas={['Nome', 'Município', 'Data', 'Situação']} linhas={registrosIniciados.map(linhaRegistro)} />
+              <DrilldownLista colunas={['Nome', 'Município', 'Data', 'Situação']} linhas={registrosNovasAdmissoes.map(linhaRegistro)} />
             </div>
             <p style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontFamily: 'var(--font-family)' }}>
-              Saídas consideradas
+              Desligamentos efetivos considerados
             </p>
-            <DrilldownLista colunas={['Nome', 'Município', 'Data', 'Situação']} linhas={registrosFinalizados.map(linhaRegistro)} />
+            <DrilldownLista colunas={['Nome', 'Município', 'Data', 'Situação']} linhas={registrosDesligamentosEfetivos.map(linhaRegistro)} />
           </>
         )}
 
