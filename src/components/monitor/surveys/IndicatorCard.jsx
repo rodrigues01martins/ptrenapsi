@@ -1,4 +1,5 @@
 import KpiCard from '../ui/KpiCard'
+import IndicatorTooltip from '../../../features/indicators-general/IndicatorTooltip'
 
 // ============================================================
 // CARD DE INDICADOR DAS PESQUISAS (seção 72)
@@ -27,7 +28,7 @@ export default function IndicatorCard({ indicator, onDetails }) {
 
   return (
     <KpiCard
-      label={`${indicator.code} — ${indicator.name}`}
+      label={<><IndicatorTooltip code={indicator.code} /> — {indicator.name}</>}
       value={valorFormatado}
       sub={sub}
       color={cor}

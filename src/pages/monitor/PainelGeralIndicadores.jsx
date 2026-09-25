@@ -3,6 +3,7 @@ import { Printer } from 'lucide-react';
 import { useGeneralIndicators } from '../../features/indicators-general/useGeneralIndicators';
 import { INDICATOR_CATALOG } from '../../features/indicators-general/catalog';
 import { formatarValor } from '../../features/indicators-general/situacao';
+import IndicatorTooltip, { nomeIndicador } from '../../features/indicators-general/IndicatorTooltip';
 import Loader from '../../components/monitor/ui/Loader';
 
 // ============================================================
@@ -133,7 +134,7 @@ export default function PainelGeralIndicadores() {
                   const r = resultadosPorSigla[item.sigla];
                   return (
                     <tr key={item.sigla} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '8px', fontWeight: 700 }}>{item.sigla}</td>
+                      <td style={{ padding: '8px', fontWeight: 700 }}><IndicatorTooltip code={item.sigla} /></td>
                       <td style={{ padding: '8px' }}>{item.nome}</td>
                       <td style={{ padding: '8px', textAlign: 'right' }}>
                         {r?.comparativo ? 'Ver seção detalhada' : formatarValor(r?.valor ?? null, item.unidade)}
@@ -164,7 +165,7 @@ export default function PainelGeralIndicadores() {
                 const r = resultadosPorSigla[item.sigla];
                 return (
                   <div key={item.sigla} className="ficha-indicador" style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', marginBottom: '10px' }}>
-                    <p style={{ fontWeight: 700, fontSize: '14px' }}>{item.sigla} — {item.nome}</p>
+                    <p style={{ fontWeight: 700, fontSize: '14px' }}><IndicatorTooltip code={item.sigla} /> — {item.nome}</p>
                     <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 8px' }}>{item.definicaoOperacional}</p>
                     {r?.comparativo && r.comparativo.length > 0 ? (
                       <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
@@ -180,7 +181,7 @@ export default function PainelGeralIndicadores() {
                           {r.comparativo.map((p, idx) => (
                             <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                               <td style={{ padding: '6px' }}>{p.publico}</td>
-                              <td style={{ padding: '6px' }}>{p.indicatorCode}</td>
+                              <td style={{ padding: '6px' }}><IndicatorTooltip code={p.indicatorCode} /> — {p.resultado?.name || nomeIndicador(p.indicatorCode) || '—'}</td>
                               <td style={{ padding: '6px', textAlign: 'right' }}>{formatarValor(p.resultado?.value ?? null, 'Percentual')}</td>
                               <td style={{ padding: '6px' }}><Badge situacao={p.resultado?.targetMet === true ? 'Meta atingida' : p.resultado?.targetMet === false ? 'Meta não atingida' : 'Não apurado'} /></td>
                             </tr>
@@ -200,7 +201,7 @@ export default function PainelGeralIndicadores() {
                 return (
                   <div key={item.sigla} className="ficha-indicador" style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px' }}>
-                      <p style={{ fontWeight: 700, fontSize: '14px' }}>{item.sigla} — {item.nome}</p>
+                      <p style={{ fontWeight: 700, fontSize: '14px' }}><IndicatorTooltip code={item.sigla} /> — {item.nome}</p>
                       <Badge situacao={r?.situacao || 'Não apurado'} />
                     </div>
                     <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0' }}><strong>Resultado esperado:</strong> {item.resultadoEsperado}</p>

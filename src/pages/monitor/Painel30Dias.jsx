@@ -15,6 +15,7 @@ import {
   buscarRespostasPeriodo,
 } from '../../services/verificacao30DiasService'
 import IndicatorDrilldown, { DrilldownComposicao, DrilldownLista } from '../../components/monitor/ui/IndicatorDrilldown'
+import IndicatorTooltip from '../../features/indicators-general/IndicatorTooltip'
 
 const tooltipStyle = {
   contentStyle: {
@@ -206,7 +207,7 @@ export default function Painel30Dias() {
               return (
                 <KpiCard
                   key={def.id}
-                  label={`${def.id} — ${def.nome}`}
+                  label={<><IndicatorTooltip code={def.id} /> — {def.nome}</>}
                   value={formatarPercentual(ind.percentual)}
                   sub={ind.percentual === null ? 'Sem base para cálculo' : `Base válida: ${ind.baseValida} respostas`}
                   color={ind.percentual === null ? 'danger' : 'blue'}
@@ -225,7 +226,7 @@ export default function Painel30Dias() {
               {comparacaoIndicadores.map(ind => (
                 <div key={ind.id}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontFamily: 'var(--font-family)', fontWeight: 500 }}>{ind.id}</span>
+                    <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontFamily: 'var(--font-family)', fontWeight: 500 }}><IndicatorTooltip code={ind.id} /></span>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brand-primary)', fontFamily: 'var(--font-family)' }}>
                       {formatarPercentual(ind.percentual)} {ind.percentual !== null && `(base: ${ind.baseValida})`}
                     </span>

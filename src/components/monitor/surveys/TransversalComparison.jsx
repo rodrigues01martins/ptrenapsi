@@ -1,3 +1,5 @@
+import IndicatorTooltip from '../../../features/indicators-general/IndicatorTooltip'
+
 // ============================================================
 // COMPARAÇÃO TRANSVERSAL — lado a lado, NUNCA média entre públicos
 // ============================================================
@@ -26,7 +28,7 @@ export default function TransversalComparison({ analysis }) {
             <div key={p.publico}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '8px' }}>
                 <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontFamily: 'var(--font-family)', fontWeight: 600 }}>
-                  {p.publico} — {r ? `${r.code} (${r.name})` : p.indicatorCode}
+                  {p.publico} — {r ? <><IndicatorTooltip code={r.code} /> ({r.name})</> : <IndicatorTooltip code={p.indicatorCode} />}
                 </span>
                 <span style={{ fontSize: '13px', fontWeight: 700, color: semDados ? 'var(--text-muted)' : 'var(--brand-primary)', fontFamily: 'var(--font-family)' }}>
                   {semDados ? 'Sem dados' : `${r.value.toFixed(1)}% · ${formatarMeta(r.target, r.targetOperator)} · ${r.targetMet ? 'Atingida' : 'Não atingida'}`}

@@ -3,6 +3,7 @@ import { buscarPeriodos, buscarDadosPeriodo } from '../../services/firestoreServ
 import { enriquecerDados, calcularAgregados, formatarPeriodo, selecionarPorFlag } from '../../services/csvService'
 import { baseFinanceira, baseGerencial } from '../../services/classificacaoService'
 import { calcularPVPeTRV } from '../../services/indicadoresExecucaoService'
+import IndicatorTooltip from '../../features/indicators-general/IndicatorTooltip'
 import KpiCard from '../../components/monitor/ui/KpiCard'
 import ChartCard from '../../components/monitor/ui/ChartCard'
 import Loader from '../../components/monitor/ui/Loader'
@@ -306,7 +307,7 @@ export default function Frequencia() {
         />
         <GaugeCard
           icon={<SvgIcon path={ICONS.reposicao} />}
-          label="Reposição de Vagas (TRV)"
+          label={<>Reposição de Vagas (<IndicatorTooltip code="TRV" />)</>}
           value={ind_reposicao}
           sub={vagasDisponiveis > 0
             ? `${novasAdmissoes} admissões efetivas de ${vagasDisponiveis} vagas disponíveis`
