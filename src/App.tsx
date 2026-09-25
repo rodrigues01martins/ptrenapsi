@@ -61,6 +61,7 @@ export function App() {
   const [canAccessPainelSatisfacao, setCanAccessPainelSatisfacao] = useState(false);
   const [canAccessAvaliacaoPosPrograma, setCanAccessAvaliacaoPosPrograma] = useState(false);
   const [canAccessPainelPosPrograma, setCanAccessPainelPosPrograma] = useState(false);
+  const [canAccessPainelGeralIndicadores, setCanAccessPainelGeralIndicadores] = useState(false);
 
   // Lê papel/permissões do Firestore para o usuário logado
   useEffect(() => {
@@ -83,6 +84,7 @@ export function App() {
       setCanAccessPainelSatisfacao(false);
       setCanAccessAvaliacaoPosPrograma(false);
       setCanAccessPainelPosPrograma(false);
+      setCanAccessPainelGeralIndicadores(false);
       return;
     }
     const bootstrapAdmin = user.email === BOOTSTRAP_ADMIN_EMAIL;
@@ -108,6 +110,7 @@ export function App() {
       setCanAccessPainelSatisfacao(admin || data?.canAccessPainelSatisfacao === true);
       setCanAccessAvaliacaoPosPrograma(admin || data?.canAccessAvaliacaoPosPrograma === true);
       setCanAccessPainelPosPrograma(admin || data?.canAccessPainelPosPrograma === true);
+      setCanAccessPainelGeralIndicadores(admin || data?.canAccessPainelGeralIndicadores === true);
     }).catch(() => {
       setIsAdmin(bootstrapAdmin);
       setCanAccessRelatorio(bootstrapAdmin);
@@ -127,6 +130,7 @@ export function App() {
       setCanAccessPainelSatisfacao(bootstrapAdmin);
       setCanAccessAvaliacaoPosPrograma(bootstrapAdmin);
       setCanAccessPainelPosPrograma(bootstrapAdmin);
+      setCanAccessPainelGeralIndicadores(bootstrapAdmin);
     });
   }, [user]);
 
@@ -441,6 +445,7 @@ export function App() {
           canAccessPainelSatisfacao={canAccessPainelSatisfacao}
           canAccessAvaliacaoPosPrograma={canAccessAvaliacaoPosPrograma}
           canAccessPainelPosPrograma={canAccessPainelPosPrograma}
+          canAccessPainelGeralIndicadores={canAccessPainelGeralIndicadores}
           onGoHome={handleGoHome}
           onSignOut={handleSignOut}
           showToast={showToast}

@@ -10,7 +10,7 @@
 // alteração aqui precisa continuar espelhada em firestore.rules (que é
 // declarativo e não pode importar TypeScript).
 //
-// Total real confirmado: 17 permissões individuais.
+// Total real confirmado: 18 permissões individuais.
 export type PermissionKey =
   // Apuração Mensal
   | 'canAccessUpload' | 'canAccessGerencial' | 'canAccessRepasse' | 'canAccessHistorico'
@@ -18,7 +18,7 @@ export type PermissionKey =
   | 'canAccessEixo3' | 'canAccessFormulario30Dias' | 'canAccessRelatorio'
   | 'canAccessPesquisasSatisfacao' | 'canAccessAvaliacaoPosPrograma'
   | 'canAccessFrequencia' | 'canAccessAlcance' | 'canAccessEixo4' | 'canAccessPainel30Dias'
-  | 'canAccessPainelSatisfacao' | 'canAccessPainelPosPrograma'
+  | 'canAccessPainelSatisfacao' | 'canAccessPainelPosPrograma' | 'canAccessPainelGeralIndicadores'
   // Acompanhamento Financeiro
   | 'canAccessEntry' | 'canAccessReport';
 
@@ -47,6 +47,7 @@ export const PERMISSION_FIELDS: PermissionField[] = [
   { key: 'canAccessPesquisasSatisfacao',    label: 'Indicadores de Satisfação',          group: 'Monitoramento e Avaliação', subgroup: 'Formulários' },
   { key: 'canAccessAvaliacaoPosPrograma',   label: 'Avaliação Pós-Programa',             group: 'Monitoramento e Avaliação', subgroup: 'Formulários' },
 
+  { key: 'canAccessPainelGeralIndicadores', label: 'Painel Geral de Indicadores', group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
   { key: 'canAccessFrequencia',    label: 'Eixo 1 — Inclusão',                  group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
   { key: 'canAccessAlcance',       label: 'Eixo 2 — Alcance',                   group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },
   { key: 'canAccessEixo4',         label: 'Visita In Loco (Teórica e Prática)', group: 'Monitoramento e Avaliação', subgroup: 'Painéis' },

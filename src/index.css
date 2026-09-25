@@ -125,6 +125,15 @@ body {
 @media print {
   header { display: none !important; }
   .no-print { display: none !important; }
+
+  /* Painel Geral de Indicadores — relatório institucional (Manutenção B) */
+  .relatorio-geral thead { display: table-header-group; }
+  .relatorio-geral table { page-break-inside: auto; }
+  .relatorio-geral tr { page-break-inside: avoid; page-break-after: auto; }
+  .relatorio-geral .ficha-indicador { break-inside: avoid; page-break-inside: avoid; }
+  .relatorio-geral .quebra-pagina { break-before: page; page-break-before: always; }
+  .relatorio-geral { color: #000 !important; }
+  .relatorio-geral * { box-shadow: none !important; }
 }
 
 @page {

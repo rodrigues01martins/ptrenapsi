@@ -43,7 +43,8 @@ service cloud.firestore {
         dados.canAccessPesquisasSatisfacao == false &&
         dados.canAccessPainelSatisfacao == false &&
         dados.canAccessAvaliacaoPosPrograma == false &&
-        dados.canAccessPainelPosPrograma == false;
+        dados.canAccessPainelPosPrograma == false &&
+        dados.canAccessPainelGeralIndicadores == false;
     }
 
     // ── Pesquisas de Satisfação / Avaliação Pós-Programa — helpers ──

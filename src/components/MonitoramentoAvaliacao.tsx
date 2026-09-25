@@ -14,8 +14,9 @@ import PesquisasSatisfacaoImport from '../pages/monitor/PesquisasSatisfacaoImpor
 import AvaliacaoPosProgramaImport from '../pages/monitor/AvaliacaoPosProgramaImport';
 import PainelIndicadoresSatisfacao from '../pages/monitor/PainelIndicadoresSatisfacao';
 import PainelAvaliacaoPosPrograma from '../pages/monitor/PainelAvaliacaoPosPrograma';
+import PainelGeralIndicadores from '../pages/monitor/PainelGeralIndicadores';
 
-type MetasTab = 'relatorio' | 'frequencia' | 'alcance' | 'eixo3' | 'eixo3pratica' | 'eixo4' | 'eixo4pratica' | 'formulario30dias' | 'painel30dias' | 'pesquisasSatisfacao' | 'avaliacaoPosPrograma' | 'painelSatisfacao' | 'painelPosPrograma';
+type MetasTab = 'relatorio' | 'frequencia' | 'alcance' | 'eixo3' | 'eixo3pratica' | 'eixo4' | 'eixo4pratica' | 'formulario30dias' | 'painel30dias' | 'pesquisasSatisfacao' | 'avaliacaoPosPrograma' | 'painelSatisfacao' | 'painelPosPrograma' | 'painelGeral';
 
 interface MonitoramentoAvaliacaoProps {
   isAdmin: boolean;
@@ -30,6 +31,7 @@ interface MonitoramentoAvaliacaoProps {
   canAccessPainelSatisfacao: boolean;
   canAccessAvaliacaoPosPrograma: boolean;
   canAccessPainelPosPrograma: boolean;
+  canAccessPainelGeralIndicadores: boolean;
   onGoHome: () => void;
   onSignOut: () => void;
   showToast: (message: string) => void;
@@ -59,6 +61,7 @@ const MONITORING_NAV: MonitoringNavConfigEntry[] = [
   },
   {
     type: 'group', label: 'Painéis', items: [
+      { key: 'painelGeral',  label: 'Painel Geral de Indicadores',      can: p => p.isAdmin || p.canAccessPainelGeralIndicadores },
       { key: 'frequencia',   label: 'Eixo 1 — Inclusão',                can: p => p.isAdmin || p.canAccessFrequencia },
       { key: 'alcance',      label: 'Eixo 2 — Alcance',                 can: p => p.isAdmin || p.canAccessAlcance },
       { key: 'eixo4',        label: 'Visita In Loco – Teórica',         can: p => p.isAdmin || p.canAccessEixo4 },
@@ -101,7 +104,7 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
     const first = TODAS_ABAS.find(t => t.can(props));
     if (first) setActiveTab(first.key);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.isAdmin, props.canAccessRelatorio, props.canAccessFrequencia, props.canAccessAlcance, props.canAccessEixo3, props.canAccessEixo4, props.canAccessFormulario30Dias, props.canAccessPainel30Dias, props.canAccessPesquisasSatisfacao, props.canAccessPainelSatisfacao, props.canAccessAvaliacaoPosPrograma, props.canAccessPainelPosPrograma]);
+  }, [props.isAdmin, props.canAccessRelatorio, props.canAccessFrequencia, props.canAccessAlcance, props.canAccessEixo3, props.canAccessEixo4, props.canAccessFormulario30Dias, props.canAccessPainel30Dias, props.canAccessPesquisasSatisfacao, props.canAccessPainelSatisfacao, props.canAccessAvaliacaoPosPrograma, props.canAccessPainelPosPrograma, props.canAccessPainelGeralIndicadores]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
@@ -145,6 +148,7 @@ export const MonitoramentoAvaliacao: React.FC<MonitoramentoAvaliacaoProps> = (pr
           {activeTab === 'avaliacaoPosPrograma' && <AvaliacaoPosProgramaImport />}
           {activeTab === 'painelSatisfacao' && <PainelIndicadoresSatisfacao />}
           {activeTab === 'painelPosPrograma' && <PainelAvaliacaoPosPrograma />}
+          {activeTab === 'painelGeral' && <PainelGeralIndicadores />}
         </div>
       </div>
     </div>
