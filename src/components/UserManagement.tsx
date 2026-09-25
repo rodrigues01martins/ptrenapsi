@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { collection, doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { db, auth } from '../firebase';
-import { Users, Shield, ShieldOff, RefreshCw, Search, ChevronDown, X, UserPlus, KeyRound } from 'lucide-react';
+import { db, auth, BOOTSTRAP_ADMIN_EMAIL } from '../firebase';
+import { Users, Shield, ShieldOff, RefreshCw, Search, ChevronDown, X, UserPlus, KeyRound, Trash2 } from 'lucide-react';
 import { PageHeader } from './ui/PageHeader';
 import { KpiCard } from './ui/Card';
 import { TextInput } from './ui/FormField';
@@ -10,6 +10,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { CreateUserModal } from './CreateUserModal';
+import { DeleteUserModal } from './DeleteUserModal';
 import { PermissionKey, AreaKey, PermissionField, PERMISSION_FIELDS, AREA_ORDER, DEFAULT_PERMISSIONS } from '../config/permissions';
 
 type UserRecord = { uid: string; email: string; displayName?: string; role: string; createdAt?: string } & {
@@ -31,13 +32,16 @@ function areasComAcesso(user: UserRecord): AreaKey[] {
 interface GerenciarPermissoesProps {
   user: UserRecord;
   isCurrentUser: boolean;
+  isBootstrap: boolean;
+  isLastAdmin: boolean;
   savingKey: string | null;
   onClose: () => void;
   onTogglePermission: (uid: string, field: PermissionKey, current: boolean) => void;
   onToggleRole: (uid: string, current: string) => void;
+  onRequestDelete: () => void;
 }
 
-function GerenciarPermissoesModal({ user, isCurrentUser, savingKey, onClose, onTogglePermission, onToggleRole }: GerenciarPermissoesProps) {
+function GerenciarPermissoesModal({ user, isCurrentUser, isBootstrap, isLastAdmin, savingKey, onClose, onTogglePermission, onToggleRole, onRequestDelete }: GerenciarPermissoesProps) {
   const previamenteFocado = useRef<Element | null>(null);
   const botaoFecharRef = useRef<HTMLButtonElement>(null);
   const totalAtivos = contarAtivos(user, PERMISSION_FIELDS);
@@ -184,6 +188,34 @@ function GerenciarPermissoesModal({ user, isCurrentUser, savingKey, onClose, onT
               );
             })
           )}
+
+          {/* Zona de risco — separada das ações rotineiras acima (seção 2) */}
+          <div className="pt-2 border-t border-slate-100">
+            <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-2">Zona de risco</p>
+            <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-red-50/60 border border-red-100">
+              <div>
+                <p className="text-sm text-slate-700">Excluir usuário</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {isCurrentUser
+                    ? 'Você não pode excluir a própria conta.'
+                    : isBootstrap
+                      ? 'Administrador protegido do sistema — não pode ser excluído.'
+                      : isLastAdmin
+                        ? 'Último administrador operacional — torne outro usuário administrador antes.'
+                        : 'Remove permanentemente o acesso deste usuário.'}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={onRequestDelete}
+                disabled={isCurrentUser || isBootstrap || isLastAdmin}
+              >
+                <Trash2 size={13} />
+                Excluir
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -206,6 +238,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
   const [gerenciando, setGerenciando] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [criandoUsuario, setCriandoUsuario] = useState(false);
+  const [excluindo, setExcluindo] = useState<UserRecord | null>(null);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), snap => {
@@ -285,6 +318,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
   );
 
   const usuarioGerenciando = gerenciando ? users.find(u => u.uid === gerenciando) || null : null;
+  const totalAdmins = users.filter(u => u.role === 'admin').length;
 
   return (
     <div>
@@ -407,10 +441,29 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
         <GerenciarPermissoesModal
           user={usuarioGerenciando}
           isCurrentUser={usuarioGerenciando.uid === currentUserUid}
+          isBootstrap={usuarioGerenciando.email === BOOTSTRAP_ADMIN_EMAIL}
+          isLastAdmin={usuarioGerenciando.role === 'admin' && totalAdmins <= 1}
           savingKey={savingKey}
           onClose={() => setGerenciando(null)}
           onTogglePermission={togglePermission}
           onToggleRole={toggleRole}
+          onRequestDelete={() => {
+            setGerenciando(null);
+            setExcluindo(usuarioGerenciando);
+          }}
+        />
+      )}
+
+      {excluindo && (
+        <DeleteUserModal
+          user={excluindo}
+          onClose={() => setExcluindo(null)}
+          onDeleted={() => {
+            setExcluindo(null);
+            // A lista e os KPIs já atualizam sozinhos via onSnapshot assim
+            // que o documento users/{uid} é removido pelo endpoint.
+            showToast('Usuário excluído. Os registros administrativos e operacionais anteriores foram preservados.');
+          }}
         />
       )}
 

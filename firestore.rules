@@ -106,8 +106,15 @@ service cloud.firestore {
       allow read: if isAdmin() || isOwner(userId);
       // Usuário só cria o próprio doc com privilégios zerados (role='user',
       // nenhuma permissão habilitada); admin cria qualquer usuário com
-      // qualquer valor.
-      allow create: if isAdmin() || (isOwner(userId) && semPermissoesElevadas(request.resource.data));
+      // qualquer valor. Uma conta excluída (registrada em deletedUsers,
+      // ver abaixo) nunca recria o próprio cadastro, mesmo com um token
+      // antigo ainda não expirado — o bloqueio não depende de o token
+      // ter sido revogado a tempo.
+      allow create: if isAdmin() || (
+        isOwner(userId) &&
+        semPermissoesElevadas(request.resource.data) &&
+        !exists(/databases/$(database)/documents/deletedUsers/$(userId))
+      );
       // Usuário só pode alterar o próprio nome de exibição — role e todas as
       // permissões (canAccess*) são exclusivas do admin. Antes só `role` era
       // protegido; um usuário comum conseguia se autoconceder qualquer
@@ -117,6 +124,18 @@ service cloud.firestore {
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName'])
       );
       allow delete: if isAdmin();
+    }
+
+    // ── Registro mínimo de contas excluídas (MANUTENÇÃO A) ──────
+    // Guarda só o UID (na própria chave do documento) e a data da
+    // exclusão — nenhum dado pessoal. Existe unicamente para impedir que
+    // um token antigo, ainda não expirado, recrie users/{uid} depois que
+    // a conta foi excluída (ver regra de create acima). Nunca é escrito
+    // pelo client: a exclusão real roda via Admin SDK em
+    // api/admin/delete-user.ts, que ignora estas regras — a única
+    // finalidade delas aqui é impedir leitura/escrita por usuários comuns.
+    match /deletedUsers/{uid} {
+      allow read, write: if isAdmin();
     }
 
     // ── Itens do Plano de Trabalho (orçamento) ──────────────────
